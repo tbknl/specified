@@ -1,0 +1,53 @@
+{
+	"name": "specified",
+	"version": "0.0.0",
+	"description": "Type-safe typescript data specification verification",
+	"author": "Dave van Soest",
+	"license": "MIT",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"start": "node .",
+		"build": "npm run clean && tsc",
+		"clean": "rimraf dist/*",
+		"pretest": "npm run build",
+		"test": "mocha --require ts-node/register \"test/**/*.test.ts*\"",
+		"lint": "tslint -p tsconfig.json",
+		"preversion": "npm run lint && npm test",
+		"prepack": "npm run lint && npm test",
+		"watch-build": "onchange -i -k --await-write-finish 100 \"src/**/*.ts\" -- npm run build",
+		"watch-test": "onchange -i -k --await-write-finish 100 \"test/**/*.ts\" \"src/**/*.ts\" -i -- npm test",
+		"watch-lint": "onchange -i -k --await-write-finish 100 \"test/**/*.ts\" \"src/**/*.ts\" -i -- npm run lint"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.1.7",
+		"@types/mocha": "^5.2.5",
+		"@types/node": "^10.12.21",
+		"chai": "^4.2.0",
+		"mocha": "^5.2.0",
+		"onchange": "^5.2.0",
+		"rimraf": "^2.6.3",
+		"ts-node": "^7.0.1",
+		"tslint": "^5.12.1",
+		"typescript": "^3.3.1"
+	},
+	"dependencies": {},
+	"files": [
+		"dist/"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/tbknl/specified.git"
+	},
+	"homepage": "https://github.com/tbknl/specified",
+	"bugs": {
+		"url": "https://github.com/tbknl/specified/issues"
+	},
+	"keywords": [
+		"typescript",
+		"spec",
+		"specification",
+		"type",
+		"constraint"
+	]
+}
