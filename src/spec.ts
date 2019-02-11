@@ -98,7 +98,7 @@ export const adjust = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, adjust
     return {
         tag: `adjusted[${spec.tag}]`,
         eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
-            return spec.eval(value, { local: Object.assign({}, adjustedOptions, options.local), global: options.global });
+            return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
         }
     };
 };

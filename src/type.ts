@@ -54,7 +54,7 @@ export const Type = {
         return {
             tag: `array<${spec.tag}>`,
             eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean }>) => {
-                const settings = Object.assign({ failEarly: false }, options.global, options.local);
+                const settings = { failEarly: false, ...options.global, ...options.local };
                 if (!(data instanceof Array)) {
                     throw new ValidationError("Not an array.");
                 }
@@ -84,7 +84,7 @@ export const Type = {
         return {
             tag: "object",
             eval: (data: unknown, options: SpecOptions<{ strict?: boolean, failEarly?: boolean }>) => {
-                const settings = Object.assign({ strict: true, failEarly: false }, options.global, options.local);
+                const settings = { strict: true, failEarly: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     throw new ValidationError("Not a regular object.");
                 }
@@ -131,7 +131,7 @@ export const Type = {
         return {
             tag: `map<${keySpec.tag},${valueSpec.tag}>`,
             eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean }>) => {
-                const settings = Object.assign({ failEarly: false }, options.global, options.local);
+                const settings = { failEarly: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     throw new ValidationError("Not a regular object.");
                 }
