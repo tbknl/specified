@@ -1,18 +1,24 @@
+type ValidationErrorKey = string | number;
+
 interface ValidationErrorJsonReport {
     msg: string;
-    key?: string | number;
+    key?: ValidationErrorKey;
     nested?: ValidationErrorJsonReport[];
 }
 
 
 export class ValidationError extends Error {
-    private readonly key: string | number | undefined;
+    private readonly key: ValidationErrorKey | undefined;
     private readonly nestedErrors: ValidationError[];
 
-    public constructor(message: string, options?: { key?: string | number, nestedErrors?: ValidationError[] }) {
+    public constructor(message: string, options?: { key?: ValidationErrorKey, nestedErrors?: ValidationError[] }) {
         super(message);
         this.key = options ? options.key : undefined;
         this.nestedErrors = options && options.nestedErrors || [];
+    }
+
+    public getKey() {
+        return this.key;
     }
 
     public generateReportJson(): ValidationErrorJsonReport {
@@ -23,6 +29,22 @@ export class ValidationError extends Error {
             ...keyProp,
             ...nestedProp
         };
+    }
+
+    public generateErrorPathList() {
+        const errorPathList: { path: ValidationErrorKey[], msg: string }[] = [];
+        const pathKey = typeof this.key !== "undefined" ? [this.key] : [];
+        if (this.nestedErrors.length) {
+            this.nestedErrors.forEach(ne => {
+                errorPathList.push(...ne.generateErrorPathList().map(nep => {
+                    return { path: pathKey.concat(nep.path), msg: nep.msg };
+                }));
+            });
+        }
+        else {
+            errorPathList.push({ path: pathKey, msg: this.message });
+        }
+        return errorPathList;
     }
 }
 
