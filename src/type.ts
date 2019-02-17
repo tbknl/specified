@@ -53,8 +53,8 @@ export const Type = {
     array: <T>(spec: Spec<T>) => {
         return {
             tag: `array<${spec.tag}>`,
-            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean }>) => {
-                const settings = { failEarly: false, ...options.global, ...options.local };
+            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalid?: boolean }>) => {
+                const settings = { failEarly: false, skipInvalid: false, ...options.global, ...options.local };
                 if (!(data instanceof Array)) {
                     throw new ValidationError("Not an array.");
                 }
@@ -66,7 +66,9 @@ export const Type = {
                     }
                     catch (err) {
                         if (err instanceof ValidationError) {
-                            nestedErrors.push(new ValidationError(`Evaluation of array element at index "${i}" failed.`, {key: i, nestedErrors: [err] }));
+                            if (!settings.skipInvalid) {
+                                nestedErrors.push(new ValidationError(`Evaluation of array element at index "${i}" failed.`, {key: i, nestedErrors: [err] }));
+                            }
                         }
                         else {
                             throw err;
@@ -130,8 +132,8 @@ export const Type = {
     map: <T>(keySpec: Spec<string>, valueSpec: Spec<T>) => {
         return {
             tag: `map<${keySpec.tag},${valueSpec.tag}>`,
-            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean }>) => {
-                const settings = { failEarly: false, ...options.global, ...options.local };
+            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalidKeys?: boolean, skipInvalidValues?: boolean }>) => {
+                const settings = { failEarly: false, skipInvalidKeys: false, skipInvalidValues: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     throw new ValidationError("Not a regular object.");
                 }
@@ -147,7 +149,9 @@ export const Type = {
                         }
                         catch (err) {
                             if (err instanceof ValidationError) {
-                                nestedErrors.push(new ValidationError(`Evaluation of map value for key "${dk}" failed.`, { key: dk, nestedErrors: [err] }));
+                                if (!settings.skipInvalidValues) {
+                                    nestedErrors.push(new ValidationError(`Evaluation of map value for key "${dk}" failed.`, { key: dk, nestedErrors: [err] }));
+                                }
                             }
                             else {
                                 throw err;
@@ -156,7 +160,9 @@ export const Type = {
                     }
                     catch (err) {
                         if (err instanceof ValidationError) {
-                            nestedErrors.push(new ValidationError(`Evaluation of map key "${dk}" failed.`, { key: dk, nestedErrors: [err] }));
+                            if (!settings.skipInvalidKeys) {
+                                nestedErrors.push(new ValidationError(`Evaluation of map key "${dk}" failed.`, { key: dk, nestedErrors: [err] }));
+                            }
                         }
                         else {
                             throw err;

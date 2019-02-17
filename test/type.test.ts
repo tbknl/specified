@@ -294,6 +294,22 @@ describe("type", () => {
 
         });
 
+        describe("non-ValidationError", () => {
+            const errorMessage = "Not a validation error.";
+            const errorConstraint = {
+                tag: "error-constraint",
+                eval: (_value: number) => {
+                    throw new Error(errorMessage);
+                }
+            };
+            const errorObjectSpec = Type.object({ a: constrain(Type.number, [errorConstraint]) });
+
+            it("throws the original error", () => {
+                chai.expect(() => verify(errorObjectSpec, { a: 123 })).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+        });
+
     });
 
     describe("array", () => {
@@ -432,6 +448,42 @@ describe("type", () => {
 
         });
 
+        describe("skipInvalid", () => {
+            const numberArraySpec = Type.array(Type.number);
+
+            it("does not skip invalid elements by default", () => {
+                const result = verify(numberArraySpec, [1, "x", "y", 4]);
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("does not skip invalid elements when local option tells it to do so", () => {
+                const result = verify(adjust(numberArraySpec, { skipInvalid: false }), [1, "x", "y", 4]);
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("skips invalid elements when local option tells it to do so", () => {
+                const value = verify(adjust(numberArraySpec, { skipInvalid: true }), [1, "x", "y", 4]).value();
+                chai.expect(value).to.eql([1, 4]);
+            });
+
+        });
+
+        describe("non-ValidationError", () => {
+            const errorMessage = "Not a validation error.";
+            const errorConstraint = {
+                tag: "error-constraint",
+                eval: (_value: number) => {
+                    throw new Error(errorMessage);
+                }
+            };
+            const errorArraySpec = Type.array(constrain(Type.number, [errorConstraint]));
+
+            it("throws the original error", () => {
+                chai.expect(() => verify(errorArraySpec, [123])).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+        });
+
     });
 
     describe("map", () => {
@@ -530,6 +582,68 @@ describe("type", () => {
 
                 const result2 = verify(adjust(testSpec, { failEarly: false }), { NotValidKey: [1], invalidvalue: "x" }, { failEarly: true });
                 chai.expect(result2.err && result2.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+            });
+
+        });
+
+        describe("skipInvalidKeys", () => {
+            const charSpec = constrain(Type.string, [Constraint.string.length({ min: 1, max: 1})]);
+            const charToNumberMapSpec = Type.map(charSpec, Type.number);
+
+            it("does not skip invalid keys by default", () => {
+                const result = verify(charToNumberMapSpec, { abc: 123 });
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("does not skip invalid keys when local option tells it to do so", () => {
+                const result = verify(adjust(charToNumberMapSpec, { skipInvalidKeys: false }), { def: 456 });
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("skips invalid keys when local option tells it to do so", () => {
+                const value = verify(adjust(charToNumberMapSpec, { skipInvalidKeys: true }), { a: 7, bbb: 8, c: 9 }).value();
+                chai.expect(value).to.eql({ a: 7, c: 9 });
+            });
+
+        });
+
+        describe("skipInvalidValues", () => {
+            const stringToNumberMapSpec = Type.map(Type.string, Type.number);
+
+            it("does not skip invalid values by default", () => {
+                const result = verify(stringToNumberMapSpec, { a: "not_a_number" });
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("does not skip invalid values when local option tells it to do so", () => {
+                const result = verify(adjust(stringToNumberMapSpec, { skipInvalidValues: false }), { a: "Not a number" });
+                chai.expect(result.err).to.be.instanceof(ValidationError);
+            });
+
+            it("skips invalid keys when local option tells it to do so", () => {
+                const value = verify(adjust(stringToNumberMapSpec, { skipInvalidValues: true }), { a: 123, b: "Not A Number", c: 456 }).value();
+                chai.expect(value).to.eql({ a: 123, c: 456 });
+            });
+
+        });
+
+        describe("non-ValidationError", () => {
+            const errorMessage = "Not a validation error.";
+            const errorConstraint = {
+                tag: "error-constraint",
+                eval: (_value: string) => {
+                    throw new Error(errorMessage);
+                }
+            };
+
+            it("throws the original error when error occurs in key validation", () => {
+                const errorMapSpec = Type.map(constrain(Type.string, [errorConstraint]), Type.number);
+                chai.expect(() => verify(errorMapSpec, { a: 123 })).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+            it("throws the original error when error occurs in value validation", () => {
+                const errorMapSpec = Type.map(Type.string, constrain(Type.string, [errorConstraint]));
+                chai.expect(() => verify(errorMapSpec, { a: "xyz" })).to.throw(Error).that.has.property("message").to.equal(errorMessage);
             });
 
         });
