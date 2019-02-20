@@ -5,7 +5,10 @@ export const Constraint = {
     generic: {
         oneOf: <T>(...options: T[]) => {
             return {
-                tag: "oneOf",
+                definition: {
+                    name: "oneOf",
+                    settings: { options }
+                },
                 eval: (value: T) => {
                     if (options.indexOf(value) < 0) {
                         throw new ValidationError("Not one of the accepted options.");
@@ -16,7 +19,9 @@ export const Constraint = {
     },
     number: {
         integer: {
-            tag: "integer",
+            definition: {
+                name: "integer"
+            },
             eval: (value: number) => {
                 if (value % 1 !== 0) {
                     throw new ValidationError("Not an integer.");
@@ -24,7 +29,9 @@ export const Constraint = {
             }
         },
         finite: {
-            tag: "finite",
+            definition: {
+                name: "finite"
+            },
             eval: (value: number) => {
                 if (!Number.isFinite(value)) {
                     throw new ValidationError("Not a finite number.");
@@ -33,7 +40,10 @@ export const Constraint = {
         },
         above:  (lowerLimit: number) => {
             return {
-                tag: "above",
+                definition: {
+                    name: "above",
+                    settings: { lowerLimit }
+                },
                 eval: (value: number) => {
                     if (!(value > lowerLimit)) {
                         throw new ValidationError(`Not above ${lowerLimit}.`);
@@ -43,7 +53,10 @@ export const Constraint = {
         },
         below: (upperLimit: number) => {
             return {
-                tag: "below",
+                definition: {
+                    name: "below",
+                    settings: { upperLimit }
+                },
                 eval: (value: number) => {
                     if (!(value < upperLimit)) {
                         throw new ValidationError(`Not below ${upperLimit}.`);
@@ -53,7 +66,10 @@ export const Constraint = {
         },
         atLeast:  (lowerLimit: number) => {
             return {
-                tag: "atLeast",
+                definition: {
+                    name: "atLeast",
+                    settings: { lowerLimit }
+                },
                 eval: (value: number) => {
                     if (!(value >= lowerLimit)) {
                         throw new ValidationError(`Less than ${lowerLimit}.`);
@@ -63,7 +79,10 @@ export const Constraint = {
         },
         atMost: (upperLimit: number) => {
             return {
-                tag: "atMost",
+                definition: {
+                    name: "atMost",
+                    settings: { upperLimit }
+                },
                 eval: (value: number) => {
                     if (!(value <= upperLimit)) {
                         throw new ValidationError(`Larger than ${upperLimit}.`);
@@ -74,7 +93,9 @@ export const Constraint = {
     },
     string: {
         notEmpty: {
-            tag: "notEmpty",
+            definition: {
+                name: "notEmpty"
+            },
             eval: (value: string) => {
                 if (value === "") {
                     throw new ValidationError("Empty string.");
@@ -83,7 +104,10 @@ export const Constraint = {
         },
         length: ({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
-                tag: "length",
+                definition: {
+                    name: "length",
+                    settings: { min, max }
+                },
                 eval: (value: string) => {
                     if (typeof min !== "undefined" && value.length < min) {
                         throw new ValidationError(`String length less than ${min}`);
@@ -96,7 +120,10 @@ export const Constraint = {
         },
         regex: (re: RegExp) => {
             return {
-                tag: "regex",
+                definition: {
+                    name: "regex",
+                    settings: { expression: re.source }
+                },
                 eval: (value: string) => {
                     if (!re.test(value)) {
                         throw new ValidationError("Regex mismatch.");
@@ -106,7 +133,10 @@ export const Constraint = {
         },
         startsWith: (prefix: string) => {
             return {
-                tag: "startsWith",
+                definition: {
+                    name: "startsWith",
+                    settings: { prefix }
+                },
                 eval: (value: string) => {
                     if (value.substr(0, prefix.length) !== prefix) {
                         throw new ValidationError(`String does not start with '${prefix}'.`);
@@ -116,7 +146,10 @@ export const Constraint = {
         },
         endsWith: (suffix: string) => {
             return {
-                tag: "endsWith",
+                definition: {
+                    name: "endsWith",
+                    settings: { suffix }
+                },
                 eval: (value: string) => {
                     if (value.substr(value.length - suffix.length) !== suffix) {
                         throw new ValidationError(`String does not end with '${suffix}'.`);
@@ -128,7 +161,10 @@ export const Constraint = {
     map: {
         size: <T extends {}>({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
-                tag: "size",
+                definition: {
+                    name: "size",
+                    settings: { min, max }
+                },
                 eval: (value: T) => {
                     const numKeys = Object.keys(value).length ;
                     if (typeof min !== "undefined" && numKeys < min) {
@@ -144,7 +180,10 @@ export const Constraint = {
     array: {
         length: <T>({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
-                tag: "length",
+                definition: {
+                    name: "length",
+                    settings: { min, max }
+                },
                 eval: (value: T[]) => {
                     if (typeof min !== "undefined" && value.length < min) {
                         throw new ValidationError(`Array length less than ${min}`);
@@ -157,7 +196,10 @@ export const Constraint = {
         },
         includes: <T>(includedValue: T) => {
             return {
-                tag: "includes",
+                definition: {
+                    name: "includes",
+                    settings: { value: includedValue }
+                },
                 eval: (value: T[]) => {
                     if (value.indexOf(includedValue) < 0) {
                         throw new ValidationError("Value is not included in array.");

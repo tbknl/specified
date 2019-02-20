@@ -10,14 +10,28 @@ export interface SpecOptions<LocalOptions extends {} = {}> {
     readonly global: GlobalOptions;
 }
 
+export interface ConstraintDefinition {
+    readonly name: string;
+    readonly settings?: object;
+}
+
 export interface SpecConstraint<T> {
     readonly eval: (value: T) => void;
-    readonly tag: string;
+    readonly definition: ConstraintDefinition;
+}
+
+export interface SpecDefinition {
+    readonly type: string;
+    readonly nested?: { [key: string]: SpecDefinition };
+    readonly alias?: string;
+    readonly constraints?: ConstraintDefinition[];
+    readonly adjustments?: object;
+    readonly flags?: string[];
 }
 
 export interface Spec<T, LocalOpts extends {} = {}> {
     readonly eval: (value: unknown, options: SpecOptions<LocalOpts>) => T;
-    readonly tag: string;
+    readonly definition: SpecDefinition;
 }
 
 export type VerifiedType<S extends Spec<any, any>> = ReturnType<S["eval"]>;
@@ -74,9 +88,30 @@ export const verify = <T>(spec: Spec<T, {}>, value: unknown, globalOptions: Glob
 };
 
 
-export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, constraints: Array<SpecConstraint<T>>) => {
+export const alias = <T, LocalOpts extends {}>(aliasName: string, spec: Spec<T, LocalOpts>) => {
     return {
-        tag: `constrain(${constraints.map(c => c.tag).join(",")})[${spec.tag}]`,
+        definition: {
+            ...spec.definition,
+            alias: aliasName
+        },
+        eval: spec.eval
+    };
+};
+
+
+const removeAlias = (specDef: SpecDefinition) => {
+    const def = { ...specDef };
+    delete def.alias;
+    return def;
+};
+
+
+export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, constraints: Array<SpecConstraint<T>>): Spec<T, LocalOpts> => {
+    return {
+        definition: {
+            ...removeAlias(spec.definition),
+            constraints: [...(spec.definition.constraints || []), ...constraints.map(c => c.definition)]
+        },
         eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
             const candidateResult = spec.eval(value, options);
             constraints.forEach(c => c.eval(candidateResult));
@@ -85,9 +120,13 @@ export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, con
     };
 };
 
+
 export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
     return {
-        tag: `optional[${spec.tag}]`,
+        definition: {
+            ...spec.definition,
+            flags: ["optional"]
+        },
         eval: spec.eval,
         optional: true as true
     };
@@ -96,10 +135,51 @@ export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
 
 export const adjust = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, adjustedOptions: LocalOpts): Spec<T, LocalOpts> => {
     return {
-        tag: `adjusted[${spec.tag}]`,
+        definition: {
+            ...removeAlias(spec.definition),
+            adjustments: { ...adjustedOptions, ...spec.definition.adjustments }
+        },
         eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
             return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
         }
+    };
+};
+
+
+export const definitionOf = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
+    return spec.definition;
+};
+
+
+export interface AliasedNestedSpecDefinition extends Pick<SpecDefinition, Exclude<keyof SpecDefinition, "nested">> {
+    nested?: { [key: string]: SpecDefinition | { alias: string } };
+}
+
+
+const _extractAliases = (def: SpecDefinition, aliases: { [name: string]: AliasedNestedSpecDefinition }): AliasedNestedSpecDefinition | { alias: string } => {
+    const aliasedDefinition = {
+        ...def,
+        ...(def.nested ? { nested: Object.keys(def.nested).reduce((o, k) => {
+            const nt: SpecDefinition = (def.nested as any)[k];
+            o[k] = _extractAliases(nt, aliases);
+            return o;
+        }, {}) } : {})
+    };
+    if (def.alias) {
+        aliases[def.alias] = aliasedDefinition;
+        return { alias: def.alias };
+    }
+    else {
+        return aliasedDefinition;
+    }
+};
+
+
+export const extractAliases = (def: SpecDefinition) => {
+    const aliases: { [name: string]: AliasedNestedSpecDefinition } = {};
+    return {
+        definition: _extractAliases(def, aliases),
+        aliases
     };
 };
 
@@ -115,8 +195,22 @@ export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T
         spec8?: Spec<T8, {}>,
         spec9?: Spec<T9, {}>
     ) => {
+    const nested = {
+        1: spec1.definition,
+        2: spec2.definition
+    };
+    if (spec3) { nested[3] = spec3.definition; }
+    if (spec4) { nested[4] = spec4.definition; }
+    if (spec5) { nested[5] = spec5.definition; }
+    if (spec6) { nested[6] = spec6.definition; }
+    if (spec7) { nested[7] = spec7.definition; }
+    if (spec8) { nested[8] = spec8.definition; }
+    if (spec9) { nested[9] = spec9.definition; }
     return {
-        tag: "either",
+        definition: {
+            type: "either",
+            nested
+        },
         eval: (value: unknown, options: SpecOptions): T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9  => {
             const validationErrors: ValidationError[] = [];
 

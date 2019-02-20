@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { Type, verify, VerifiedType, adjust, constrain, Constraint, ValidationError } from "..";
+import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, Constraint, ValidationError } from "..";
 
 
 describe("type", () => {
@@ -19,6 +19,10 @@ describe("type", () => {
             chai.expect(verify(Type.null, {}).err).to.be.instanceof(ValidationError);
         });
 
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.null)).to.eql({ type: "null" });
+        });
+
     });
 
     describe("number", () => {
@@ -32,6 +36,10 @@ describe("type", () => {
             chai.expect(verify(Type.number, "456").err).to.be.instanceof(ValidationError);
         });
 
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.number)).to.eql({ type: "number" });
+        });
+
     });
 
     describe("string", () => {
@@ -43,6 +51,10 @@ describe("type", () => {
 
         it("rejects non-strings", () => {
             chai.expect(verify(Type.string, { not: "a string" }).err).to.be.instanceof(ValidationError);
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.string)).to.eql({ type: "string" });
         });
 
     });
@@ -59,6 +71,10 @@ describe("type", () => {
 
         it("rejects non-booleans", () => {
             chai.expect(verify(Type.boolean, 1).err).to.be.instanceof(ValidationError);
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.boolean)).to.eql({ type: "boolean" });
         });
 
     });
@@ -85,6 +101,13 @@ describe("type", () => {
             chai.expect(verify(value1or2, 123).err).to.be.instanceof(ValidationError);
         });
 
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.literal({ a: 1, b: 1 }))).to.eql({
+                type: "literal",
+                settings: { values: ["a", "b"] }
+            });
+        });
+
     });
 
     describe("instance", () => {
@@ -103,6 +126,13 @@ describe("type", () => {
 
         it("rejects non-class objects", () => {
             chai.expect(verify(myClassSpec, {}).err).to.be.instanceof(ValidationError);
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(myClassSpec)).to.eql({
+                type: "instance",
+                settings: { className: MyClass.name }
+            });
         });
 
     });
@@ -297,7 +327,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
                 }
@@ -306,6 +336,27 @@ describe("type", () => {
 
             it("throws the original error", () => {
                 chai.expect(() => verify(errorObjectSpec, { a: 123 })).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+        });
+
+        describe("definition", () => {
+            const aSpec = Type.number;
+            const bSpec = optional(Type.string);
+            const objSpec = Type.object({
+                a: aSpec,
+                b: bSpec
+            });
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(objSpec).type).to.equal("object");
+            });
+
+            it("uses the schema attributes and their specs definitions for the nested types", () => {
+                chai.expect(definitionOf(objSpec).nested).to.eql({
+                    a: definitionOf(aSpec),
+                    b: definitionOf(bSpec)
+                });
             });
 
         });
@@ -471,7 +522,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
                 }
@@ -480,6 +531,22 @@ describe("type", () => {
 
             it("throws the original error", () => {
                 chai.expect(() => verify(errorArraySpec, [123])).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+        });
+
+        describe("definition", () => {
+            const elementSpec = Type.number;
+            const arraySpec = Type.array(elementSpec);
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(arraySpec).type).to.equal("array");
+            });
+
+            it("uses the element spec for the nested type", () => {
+                chai.expect(definitionOf(arraySpec).nested).to.eql({
+                    element: definitionOf(elementSpec)
+                });
             });
 
         });
@@ -630,7 +697,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: string) => {
                     throw new Error(errorMessage);
                 }
@@ -644,6 +711,24 @@ describe("type", () => {
             it("throws the original error when error occurs in value validation", () => {
                 const errorMapSpec = Type.map(Type.string, constrain(Type.string, [errorConstraint]));
                 chai.expect(() => verify(errorMapSpec, { a: "xyz" })).to.throw(Error).that.has.property("message").to.equal(errorMessage);
+            });
+
+        });
+
+        describe("definition", () => {
+            const keySpec = constrain(Type.string, [Constraint.string.length({ min: 1 })]);
+            const valueSpec = Type.number;
+            const mapSpec = Type.map(keySpec, valueSpec);
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(mapSpec).type).to.equal("map");
+            });
+
+            it("uses the key spec and value spec for the nestes types", () => {
+                chai.expect(definitionOf(mapSpec).nested).to.eql({
+                    key: definitionOf(keySpec),
+                    value: definitionOf(valueSpec)
+                });
             });
 
         });

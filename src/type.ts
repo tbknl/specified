@@ -4,7 +4,9 @@ import {ValidationError} from "./validation_error";
 
 export const Type = {
     null: {
-        tag: "null",
+        definition: {
+            type: "null"
+        },
         eval: (value: unknown): null => {
             if (value !== null) {
                 throw new ValidationError("Not null.");
@@ -13,7 +15,9 @@ export const Type = {
         }
     },
     string: {
-        tag: "string",
+        definition: {
+            type: "string"
+        },
         eval: (value: unknown) => {
             if (typeof value !== "string") {
                 throw new ValidationError("Not a string.");
@@ -22,7 +26,9 @@ export const Type = {
         }
     },
     number: {
-        tag: "number",
+        definition: {
+            type: "number"
+        },
         eval: (value: unknown) => {
             if (typeof value !== "number") {
                 throw new ValidationError("Not a number.");
@@ -31,7 +37,9 @@ export const Type = {
         }
     },
     boolean: {
-        tag: "boolean",
+        definition: {
+            type: "boolean"
+        },
         eval: (value: unknown) => {
             if (typeof value !== "boolean") {
                 throw new ValidationError("Not a boolean.");
@@ -41,7 +49,10 @@ export const Type = {
     },
     literal: <D extends { [k: string]: true | 1 }>(def: D) => {
         return {
-            tag: "literal",
+            definition: {
+                type: "literal",
+                settings: { values: Object.keys(def) }
+            },
             eval: (value: unknown): (keyof D) => {
                 if (typeof value !== "string" || !def.hasOwnProperty(value)) {
                     throw new ValidationError("Incorrect literal.");
@@ -52,7 +63,10 @@ export const Type = {
     },
     array: <T>(spec: Spec<T>) => {
         return {
-            tag: `array<${spec.tag}>`,
+            definition: {
+                type: "array",
+                nested: { element: spec.definition }
+            },
             eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalid?: boolean }>) => {
                 const settings = { failEarly: false, skipInvalid: false, ...options.global, ...options.local };
                 if (!(data instanceof Array)) {
@@ -84,7 +98,13 @@ export const Type = {
     },
     object: <S extends Schema>(schema: S) => {
         return {
-            tag: "object",
+            definition: {
+                type: "object",
+                nested: Object.keys(schema).reduce((o, a) => {
+                    o[a] = schema[a].definition;
+                    return o;
+                }, {})
+            },
             eval: (data: unknown, options: SpecOptions<{ strict?: boolean, failEarly?: boolean }>) => {
                 const settings = { strict: true, failEarly: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
@@ -131,7 +151,13 @@ export const Type = {
     },
     map: <T>(keySpec: Spec<string>, valueSpec: Spec<T>) => {
         return {
-            tag: `map<${keySpec.tag},${valueSpec.tag}>`,
+            definition: {
+                type: "map",
+                nested: {
+                    key: keySpec.definition,
+                    value: valueSpec.definition
+                }
+            },
             eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalidKeys?: boolean, skipInvalidValues?: boolean }>) => {
                 const settings = { failEarly: false, skipInvalidKeys: false, skipInvalidValues: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
@@ -178,7 +204,10 @@ export const Type = {
     },
     instance: <T>(ctor: new() => T) => {
         return {
-            tag: `instance[${ctor.name}]`,
+            definition: {
+                type: "instance",
+                settings: { className: "name" in ctor ? ctor.name : "" }
+            },
             eval: (value: unknown) => {
                 if (!(value instanceof ctor)) {
                     throw new ValidationError(`Not an instance of "${ctor.name}".`);
@@ -188,7 +217,9 @@ export const Type = {
         };
     },
     dateString: {
-        tag: "dateString",
+        definition: {
+            type: "dateString"
+        },
         eval: (value: unknown) => {
             const ts = Date.parse(`${value}`);
             if (ts % 1 !== 0) {
@@ -198,7 +229,9 @@ export const Type = {
         }
     },
     numeric: {
-        tag: "numeric",
+        definition: {
+            type: "numeric"
+        },
         eval: (value: unknown) => {
             const num: number = Number(value) + 0;
             if (!Number.isFinite(num)) {
@@ -207,6 +240,5 @@ export const Type = {
             return num;
         }
     }
-    // TODO: null (type-safe, which seems to be not-trivial)
 };
 
