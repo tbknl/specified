@@ -10,14 +10,28 @@ export interface SpecOptions<LocalOptions extends {} = {}> {
     readonly global: GlobalOptions;
 }
 
+export interface ConstraintDefinition {
+    readonly name: string;
+    readonly settings?: object;
+}
+
 export interface SpecConstraint<T> {
     readonly eval: (value: T) => void;
-    readonly tag: string;
+    readonly definition: ConstraintDefinition;
+}
+
+export interface SpecDefinition {
+    readonly type: string;
+    readonly nestedTypes?: { [key: string]: SpecDefinition };
+    readonly alias?: string,
+    readonly constraints?: ConstraintDefinition[];
+    readonly adjustments?: object;
+    readonly flags?: string[];
 }
 
 export interface Spec<T, LocalOpts extends {} = {}> {
     readonly eval: (value: unknown, options: SpecOptions<LocalOpts>) => T;
-    readonly tag: string;
+    readonly definition: SpecDefinition;
 }
 
 export type VerifiedType<S extends Spec<any, any>> = ReturnType<S["eval"]>;
@@ -74,9 +88,30 @@ export const verify = <T>(spec: Spec<T, {}>, value: unknown, globalOptions: Glob
 };
 
 
-export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, constraints: Array<SpecConstraint<T>>) => {
+export const alias = <T, LocalOpts extends {}>(alias: string, spec: Spec<T, LocalOpts>) => {
     return {
-        tag: `constrain(${constraints.map(c => c.tag).join(",")})[${spec.tag}]`,
+        definition: {
+            ...spec.definition,
+            alias
+        },
+        eval: spec.eval
+    };
+};
+
+
+const removeAlias = (specDef: SpecDefinition) => {
+    const def = { ...specDef };
+    delete def["alias"];
+    return def;
+};
+
+
+export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, constraints: Array<SpecConstraint<T>>): Spec<T, LocalOpts> => {
+    return {
+        definition: {
+            ...removeAlias(spec.definition),
+            constraints: [...(spec.definition.constraints || []), ...constraints.map(c => c.definition)]
+        },
         eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
             const candidateResult = spec.eval(value, options);
             constraints.forEach(c => c.eval(candidateResult));
@@ -85,9 +120,13 @@ export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, con
     };
 };
 
+
 export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
     return {
-        tag: `optional[${spec.tag}]`,
+        definition: {
+            ...spec.definition,
+            flags: ["optional"]
+        },
         eval: spec.eval,
         optional: true as true
     };
@@ -96,11 +135,19 @@ export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
 
 export const adjust = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, adjustedOptions: LocalOpts): Spec<T, LocalOpts> => {
     return {
-        tag: `adjusted[${spec.tag}]`,
+        definition: {
+            ...removeAlias(spec.definition),
+            adjustments: { ...adjustedOptions, ...spec.definition.adjustments }
+        },
         eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
             return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
         }
     };
+};
+
+
+export const definitionOf = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
+    return spec.definition;
 };
 
 
@@ -115,8 +162,22 @@ export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T
         spec8?: Spec<T8, {}>,
         spec9?: Spec<T9, {}>
     ) => {
+    const nestedTypes = {
+        1: spec1.definition,
+        2: spec2.definition
+    };
+    if (spec3) { nestedTypes[3] = spec3.definition; }
+    if (spec4) { nestedTypes[4] = spec4.definition; }
+    if (spec5) { nestedTypes[5] = spec5.definition; }
+    if (spec6) { nestedTypes[6] = spec6.definition; }
+    if (spec7) { nestedTypes[7] = spec7.definition; }
+    if (spec8) { nestedTypes[8] = spec8.definition; }
+    if (spec9) { nestedTypes[9] = spec9.definition; }
     return {
-        tag: "either",
+        definition: {
+            type: "either",
+            nestedTypes
+        },
         eval: (value: unknown, options: SpecOptions): T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9  => {
             const validationErrors: ValidationError[] = [];
 

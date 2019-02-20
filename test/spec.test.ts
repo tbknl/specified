@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { Type, verify, optional, constrain, either, Constraint, ValidationError } from "..";
+import { Type, verify, optional, constrain, adjust, either, alias, definitionOf, Constraint, ValidationError } from "..";
 
 
 describe("spec", () => {
@@ -65,8 +65,7 @@ describe("spec", () => {
 
     });
 
-    // TODO: Move to separate test file.
-    describe("constraints", () => {
+    describe("constrain", () => {
 
         const { integer, above } = Constraint.number;
 
@@ -80,7 +79,9 @@ describe("spec", () => {
         it("is possible to make custom constraints", () => {
             const booleanArray = Type.array(Type.boolean);
             const exactlyOneTrue = {
-                tag: "exactlyOneTrue",
+                definition: {
+                    name: "exactlyOneTrue"
+                },
                 eval: (value: boolean[]) => {
                     const count = value.reduce((aggr, elem) => aggr + (elem ? 1 : 0), 0);
                     if (count !== 1) {
@@ -108,39 +109,53 @@ describe("spec", () => {
 
         // TODO: constrain with different constraint types (e.g. boolean[] and number[]).
 
-    });
+        describe("definition", () => {
+            const constraints = [Constraint.number.integer, Constraint.number.above(0)];
+            const constrainedSpec = constrain(Type.number, constraints);
 
-    describe("predefined constraints", () => {
-
-        describe("map.size", () => {
-            const numberMapSpec = constrain(
-                Type.map(Type.string, Type.number),
-                [Constraint.map.size({ min: 3, max: 5 })]
-            );
-
-            it("accepts maps with a valid size", () => {
-                const myNumberMap = verify(numberMapSpec, {
-                    one: 1,
-                    two: 2,
-                    three: 3
-                });
-                chai.expect(myNumberMap.value()).to.eql({ one: 1, two: 2, three: 3 });
+            it("adds constraints to the definition", () => {
+                chai.expect(definitionOf(constrainedSpec).constraints).to.eql(constraints.map(c => c.definition));
             });
 
-            it("rejects maps with an invalid size", () => {
-                chai.expect(verify(numberMapSpec, {
-                    one: 1,
-                    two: 2,
-                    three: 3,
-                    four: 4,
-                    five: 5,
-                    six: 6
-                }).err).to.be.instanceof(ValidationError);
+            it("concatenates constraints to constraints already present in the definition", () => {
+                const moreConstraints = [Constraint.number.atMost(10)];
+                const moreConstrainedSpec = constrain(constrainedSpec, moreConstraints);
+                chai.expect(definitionOf(moreConstrainedSpec).constraints).to.eql([...constraints, ...moreConstraints].map(c => c.definition));
+            });
+
+            it("resets the alias", () => {
+                const aliasedSpec = alias("justSomeNumber", Type.number);
+                const constrainedAliasedSpec = constrain(aliasedSpec, [Constraint.number.atLeast(0)]);
+                chai.expect(definitionOf(constrainedAliasedSpec)).to.not.have.property("alias");
             });
 
         });
 
-        // TODO: Cover all predefined constraints.
+    });
+
+    describe("adjust", () => {
+
+        describe("definition", () => {
+            const aliasedSpec = alias("justSomeObject", Type.object({ a: Type.number }));
+            const adjustedSpec = adjust(aliasedSpec, { strict: false });
+
+            it("resets the alias", () => {
+                chai.expect(definitionOf(adjustedSpec)).to.not.have.property("alias");
+            });
+
+            it("adds the adjustments to the definition", () => {
+                chai.expect(definitionOf(adjustedSpec).adjustments).to.eql({ strict: false })
+            });
+
+            it("merges the adjustments to already existing adjustments of the definition", () => {
+                const doubleAdjustedSpec1 = adjust(adjustedSpec, { strict: true, failEarly: true });
+                chai.expect(definitionOf(doubleAdjustedSpec1).adjustments).to.eql({ strict: false, failEarly: true })
+
+                const doubleAdjustedSpec2 = adjust(adjustedSpec, { failEarly: false });
+                chai.expect(definitionOf(doubleAdjustedSpec2).adjustments).to.eql({ strict: false, failEarly: false })
+            });
+
+        });
 
     });
 
@@ -205,6 +220,26 @@ describe("spec", () => {
 
         // TODO: Rejects for eitherOfNine.
 
+        describe("definition", () => {
+            const option1Spec = Type.null;
+            const option2Spec = Type.number;
+            const option3Spec = Type.string;
+            const eitherSpec = either(option1Spec, option2Spec, option3Spec);
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(eitherSpec).type).to.equal("either");
+            });
+
+            it("uses the definitions of the spec options for the nested types", () => {
+                chai.expect(definitionOf(eitherSpec).nestedTypes).to.eql({
+                    1: definitionOf(option1Spec),
+                    2: definitionOf(option2Spec),
+                    3: definitionOf(option3Spec)
+                });
+            });
+
+        });
+
     });
 
     describe("validation error report", () => {
@@ -264,6 +299,20 @@ describe("spec", () => {
             // TODO: Nested type: array.
             // TODO: Disjunctive specs (either).
 
+        });
+
+    });
+
+    describe("alias", () => {
+        const aliasedSpec = alias("numberAlias", Type.number);
+
+        it("sets an alias on the spec definition", () => {
+            chai.expect(definitionOf(aliasedSpec).alias).to.equal("numberAlias");
+        });
+
+        it("overwrites an alias when the spec already has an alias", () => {
+            const aliasedAliasedSpec = alias("overwrittenAlias", aliasedSpec);
+            chai.expect(definitionOf(aliasedAliasedSpec).alias).to.equal("overwrittenAlias");
         });
 
     });

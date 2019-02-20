@@ -51,6 +51,8 @@ const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.5
 * `adjust`: Adjust the local options of a spec, if it has any. For example `adjust(Type.object({}), { strict: false })`.
 * `either(spec1, spec2, ...)` creates a new spec that accepts any of the upto 9 specs provided.
 * `optional(spec)` makes a schema attribute optional.
+* `definitionOf(spec)` returns the definition of a spec.
+* `alias(spec, alias)` adds a string alias to the spec's definition.
 
 * `ValidationError`: The error class for validation errors thrown by the types and constraints.
 	 - `err.generateReportJson()`: Generate a JSON report of the error details.
