@@ -22,7 +22,7 @@ export interface SpecConstraint<T> {
 
 export interface SpecDefinition {
     readonly type: string;
-    readonly nestedTypes?: { [key: string]: SpecDefinition };
+    readonly nested?: { [key: string]: SpecDefinition };
     readonly alias?: string,
     readonly constraints?: ConstraintDefinition[];
     readonly adjustments?: object;
@@ -151,6 +151,39 @@ export const definitionOf = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) 
 };
 
 
+export interface AliasedNestedSpecDefinition extends Pick<SpecDefinition, Exclude<keyof SpecDefinition, "nested">> {
+    nested?: { [key: string]: SpecDefinition | { alias: string } };
+}
+
+
+const _extractAliases = (def: SpecDefinition, aliases: { [name: string]: AliasedNestedSpecDefinition }): AliasedNestedSpecDefinition | { alias: string } => {
+    const aliasedDefinition = {
+        ...def,
+        ...(def.nested ? { nested: Object.keys(def.nested).reduce((o, k) => {
+            const nt: SpecDefinition = (def.nested as any)[k];
+            o[k] = _extractAliases(nt, aliases);
+            return o;
+        }, {}) } : {})
+    };
+    if (def.alias) {
+        aliases[def.alias] = aliasedDefinition;
+        return { alias: def.alias };
+    }
+    else {
+        return aliasedDefinition;
+    }
+};
+
+
+export const extractAliases = (def: SpecDefinition) => {
+    const aliases: { [name: string]: AliasedNestedSpecDefinition } = {};
+    return {
+        definition: _extractAliases(def, aliases),
+        aliases
+    };
+};
+
+
 export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T7 = never, T8 = never, T9 = never>(
         spec1: Spec<T1, {}>,
         spec2: Spec<T2, {}>,
@@ -162,21 +195,21 @@ export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T
         spec8?: Spec<T8, {}>,
         spec9?: Spec<T9, {}>
     ) => {
-    const nestedTypes = {
+    const nested = {
         1: spec1.definition,
         2: spec2.definition
     };
-    if (spec3) { nestedTypes[3] = spec3.definition; }
-    if (spec4) { nestedTypes[4] = spec4.definition; }
-    if (spec5) { nestedTypes[5] = spec5.definition; }
-    if (spec6) { nestedTypes[6] = spec6.definition; }
-    if (spec7) { nestedTypes[7] = spec7.definition; }
-    if (spec8) { nestedTypes[8] = spec8.definition; }
-    if (spec9) { nestedTypes[9] = spec9.definition; }
+    if (spec3) { nested[3] = spec3.definition; }
+    if (spec4) { nested[4] = spec4.definition; }
+    if (spec5) { nested[5] = spec5.definition; }
+    if (spec6) { nested[6] = spec6.definition; }
+    if (spec7) { nested[7] = spec7.definition; }
+    if (spec8) { nested[8] = spec8.definition; }
+    if (spec9) { nested[9] = spec9.definition; }
     return {
         definition: {
             type: "either",
-            nestedTypes
+            nested
         },
         eval: (value: unknown, options: SpecOptions): T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9  => {
             const validationErrors: ValidationError[] = [];

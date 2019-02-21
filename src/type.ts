@@ -64,7 +64,7 @@ export const Type = {
         return {
             definition: {
                 type: "array",
-                nestedTypes: { element: spec.definition }
+                nested: { element: spec.definition }
             },
             eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalid?: boolean }>) => {
                 const settings = { failEarly: false, skipInvalid: false, ...options.global, ...options.local };
@@ -99,7 +99,7 @@ export const Type = {
         return {
             definition: {
                 type: "object",
-                nestedTypes: Object.keys(schema).reduce((o, a) => {
+                nested: Object.keys(schema).reduce((o, a) => {
                     o[a] = schema[a].definition;
                     return o;
                 }, {})
@@ -152,7 +152,7 @@ export const Type = {
         return {
             definition: {
                 type: "map",
-                nestedTypes: {
+                nested: {
                     key: keySpec.definition,
                     value: valueSpec.definition
                 }

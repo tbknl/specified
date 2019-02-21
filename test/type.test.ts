@@ -317,7 +317,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
                 }
@@ -343,7 +343,7 @@ describe("type", () => {
             });
 
             it("uses the schema attributes and their specs definitions for the nested types", () => {
-                chai.expect(definitionOf(objSpec).nestedTypes).to.eql({
+                chai.expect(definitionOf(objSpec).nested).to.eql({
                     a: definitionOf(aSpec),
                     b: definitionOf(bSpec)
                 });
@@ -512,7 +512,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
                 }
@@ -534,7 +534,7 @@ describe("type", () => {
             });
 
             it("uses the element spec for the nested type", () => {
-                chai.expect(definitionOf(arraySpec).nestedTypes).to.eql({
+                chai.expect(definitionOf(arraySpec).nested).to.eql({
                     element: definitionOf(elementSpec)
                 });
             });
@@ -687,7 +687,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
-                tag: "error-constraint",
+                definition: { name: "error-constraint" },
                 eval: (_value: string) => {
                     throw new Error(errorMessage);
                 }
@@ -715,7 +715,7 @@ describe("type", () => {
             });
 
             it("uses the key spec and value spec for the nestes types", () => {
-                chai.expect(definitionOf(mapSpec).nestedTypes).to.eql({
+                chai.expect(definitionOf(mapSpec).nested).to.eql({
                     key: definitionOf(keySpec),
                     value: definitionOf(valueSpec)
                 });

@@ -53,6 +53,7 @@ const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.5
 * `optional(spec)` makes a schema attribute optional.
 * `definitionOf(spec)` returns the definition of a spec.
 * `alias(spec, alias)` adds a string alias to the spec's definition.
+* `extractAliases(definition)` extracts aliases from a definition.
 
 * `ValidationError`: The error class for validation errors thrown by the types and constraints.
 	 - `err.generateReportJson()`: Generate a JSON report of the error details.

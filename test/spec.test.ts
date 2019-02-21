@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { Type, verify, optional, constrain, adjust, either, alias, definitionOf, Constraint, ValidationError } from "..";
+import { Type, verify, optional, constrain, adjust, either, alias, definitionOf, extractAliases, Constraint, ValidationError } from "..";
 
 
 describe("spec", () => {
@@ -231,7 +231,7 @@ describe("spec", () => {
             });
 
             it("uses the definitions of the spec options for the nested types", () => {
-                chai.expect(definitionOf(eitherSpec).nestedTypes).to.eql({
+                chai.expect(definitionOf(eitherSpec).nested).to.eql({
                     1: definitionOf(option1Spec),
                     2: definitionOf(option2Spec),
                     3: definitionOf(option3Spec)
@@ -313,6 +313,71 @@ describe("spec", () => {
         it("overwrites an alias when the spec already has an alias", () => {
             const aliasedAliasedSpec = alias("overwrittenAlias", aliasedSpec);
             chai.expect(definitionOf(aliasedAliasedSpec).alias).to.equal("overwrittenAlias");
+        });
+
+    });
+
+    describe("extractAliases", () => {
+        it("extracts no aliases from a flat definition", () => {
+            const aliasName = "numberAlias";
+            const aliasedSpec = Type.number;
+            const numberAliasSpec = alias(aliasName, aliasedSpec);
+            const result = extractAliases(definitionOf(numberAliasSpec));
+            chai.expect(result.aliases).to.eql({
+                [aliasName]: definitionOf(numberAliasSpec)
+            });
+            chai.expect(result.definition).to.eql({
+                alias: aliasName
+            });
+        });
+
+        it("extracts aliases from a nested definition", () => {
+            const stringAliasSpec = alias("stringAlias", Type.string);
+            const booleanAliasSpec = alias("booleanAlias", Type.boolean);
+            const mapAliasName = "mapAlias";
+            const mapAliasSpec = alias(mapAliasName, Type.map(stringAliasSpec, booleanAliasSpec));
+            const numberAliasSpec = alias("numberAlias", Type.number);
+            const arrayAliasName = "arrayAlias";
+            const arrayAliasSpec = alias(arrayAliasName, Type.array(numberAliasSpec));
+            const objectAliasName = "objectAlias";
+            const objectAliasSpec = alias(objectAliasName, Type.object({
+                a: mapAliasSpec,
+                b: arrayAliasSpec
+            }));
+            const result = extractAliases(definitionOf(objectAliasSpec));
+            chai.expect(result.definition).to.eql({
+                alias: objectAliasName
+            });
+            chai.expect(result.aliases).to.eql({
+                [objectAliasName]: {
+                    alias: objectAliasName,
+                    type: "object",
+                    nested: {
+                        a: { alias: mapAliasName },
+                        b: { alias: arrayAliasName }
+                    }
+                },
+                [mapAliasName]: extractAliases(definitionOf(mapAliasSpec)).aliases[mapAliasName],
+                [arrayAliasName]: extractAliases(definitionOf(arrayAliasSpec)).aliases[arrayAliasName],
+                stringAlias: definitionOf(stringAliasSpec),
+                booleanAlias: definitionOf(booleanAliasSpec),
+                numberAlias: definitionOf(numberAliasSpec)
+            });
+        });
+
+        it("extracts aliases from a nested definition containing the same aliased spec twice", () => {
+            const numberAliasSpec = alias("numberAlias", Type.number);
+            const arrayAliasName = "arrayAlias";
+            const arrayAliasSpec = alias(arrayAliasName, Type.array(numberAliasSpec));
+            const objectSpec = Type.object({
+                a: numberAliasSpec,
+                b: arrayAliasSpec
+            });
+            const result = extractAliases(definitionOf(objectSpec));
+            chai.expect(result.aliases).to.eql({
+                [arrayAliasName]: extractAliases(definitionOf(arrayAliasSpec)).aliases[arrayAliasName],
+                numberAlias: definitionOf(numberAliasSpec)
+            });
         });
 
     });
