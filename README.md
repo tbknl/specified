@@ -1,8 +1,13 @@
 # specified
 
-Type-safe typescript data specification verification.
+Type-safe Typescript data specification verification.
 
 ## Rationale
+
+Any data flowing into a program at run-time should be checked for validity, while it also has an implicit or explicit type. Examples are: user input, http request body payloads, http response body payloads, message bus event payloads, environment variables, configuration files. The `specified` packages allows to describe a "spec" of the data, by specifying its type and any constraints. The spec can then be used to verify the data and will automatically assign the correct Typescript type to the result.
+
+
+## Design goals
 
 * Single definition of type and validation.
 * Strictly typed and type-safe.
@@ -58,6 +63,7 @@ const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.5
 
 * `ValidationError`: The error class for validation errors thrown by the types and constraints.
 	 - `err.generateReportJson()`: Generate a JSON report of the error details.
+	 - `err.generateErrorPathList()`: Generate a list of paths into the data which failed verification.
 
 ### Schema
 
