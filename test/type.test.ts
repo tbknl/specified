@@ -4,6 +4,23 @@ import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, 
 
 describe("type", () => {
 
+    describe("unknown", () => {
+
+        it("accepts anything", () => {
+            chai.expect(verify(Type.unknown, null).value()).to.equal(null);
+            chai.expect(verify(Type.unknown, undefined).value()).to.equal(undefined);
+            chai.expect(verify(Type.unknown, 123).value()).to.equal(123);
+            chai.expect(verify(Type.unknown, "A string is welcome too").value()).to.equal("A string is welcome too");
+            chai.expect(verify(Type.unknown, { a: 1, b: "x" }).value()).to.eql({ a: 1, b: "x" });
+            chai.expect(verify(Type.unknown, [1, "x", {}]).value()).to.eql([1, "x", {}]);
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.unknown)).to.eql({ type: "unknown" });
+        });
+
+    });
+
     describe("null", () => {
 
         it("accepts null", () => {

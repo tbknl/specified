@@ -30,6 +30,7 @@ const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.5
 ## Reference
 
 * `Type` contains these predefined type specs:
+	 - `unknown`: Accepts anything, but returns `unknown` as its type.
 	 - `null`: Only accepts `null`.
 	 - `string`: Accepts strings.
 	 - `number`: Accepts numbers.

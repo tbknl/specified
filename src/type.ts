@@ -3,6 +3,14 @@ import {ValidationError} from "./validation_error";
 
 
 export const Type = {
+    unknown: {
+        definition: {
+            type: "unknown"
+        },
+        eval: (value: unknown) => {
+            return value;
+        }
+    },
     null: {
         definition: {
             type: "null"
