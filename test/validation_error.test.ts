@@ -10,6 +10,39 @@ describe("validation error", () => {
         arrayMap: Type.map(Type.string, Type.array(Type.number))
     });
 
+    describe("get key", () => {
+
+        it("returns the key provided to the constructor", () => {
+            const key = 1234;
+            const validationError = new ValidationError("message", { key })
+            chai.expect(validationError.getKey()).to.equal(key);
+        });
+
+        it("returns undefined when no key was provided to the constructor", () => {
+            const validationError = new ValidationError("message", {})
+            chai.expect(validationError.getKey()).to.equal(undefined);
+        });
+
+    });
+
+    describe("get nested errors", () => {
+
+        it("returns the nested errors provided to the constructor", () => {
+            const nestedErrors = [
+                new ValidationError("Nested 1"),
+                new ValidationError("Nested 2")
+            ];
+            const validationError = new ValidationError("message", { nestedErrors })
+            chai.expect(validationError.getNestedErrors()).to.eql(nestedErrors);
+        });
+
+        it("returns an empty array when no nested errors were provided to the constructor", () => {
+            const validationError = new ValidationError("message", {})
+            chai.expect(validationError.getNestedErrors()).to.eql([]);
+        });
+
+    });
+
     describe("generate report json", () => {
 
         it("generates a json-able report", () => {

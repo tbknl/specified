@@ -21,6 +21,10 @@ export class ValidationError extends Error {
         return this.key;
     }
 
+    public getNestedErrors() {
+        return this.nestedErrors;
+    }
+
     public generateReportJson(): ValidationErrorJsonReport {
         const keyProp = typeof this.key === "undefined" ? {} : { key: this.key };
         const nestedProp = this.nestedErrors.length ? { nested: this.nestedErrors.map(ve => ve.generateReportJson()) } : {};
