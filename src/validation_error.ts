@@ -49,7 +49,7 @@ export class ValidationError {
     }
 
     public toString() {
-        return `ValidationError: ${this.message}`
+        return `ValidationError: ${this.message}`;
     }
 }
 
