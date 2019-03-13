@@ -10,7 +10,7 @@ interface ValidationErrorJsonReport {
 export class ValidationError {
     private readonly key: ValidationErrorKey | undefined;
     private readonly nestedErrors: ValidationError[];
-    private readonly message: string;
+    public readonly message: string;
 
     public constructor(message: string, options?: { key?: ValidationErrorKey, nestedErrors?: ValidationError[] }) {
         this.key = options ? options.key : undefined;
