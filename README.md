@@ -4,7 +4,7 @@ Type-safe Typescript data specification verification.
 
 ## Rationale
 
-Any data flowing into a program at run-time should be checked for validity, while it also has an implicit or explicit type. Examples are: user input, http request body payloads, http response body payloads, message bus event payloads, environment variables, configuration files. The `specified` packages allows to describe a "spec" of the data, by specifying its type and any constraints. The spec can then be used to verify the data and will automatically assign the correct Typescript type to the result.
+Any data flowing into a program at run-time should be checked for validity, while it also has an implicit or explicit type. Examples are: user input, http request body payloads, http response body payloads, message bus event payloads, environment variables, configuration files. The `specified` package allows to describe a "spec" of the data, by specifying its type and any constraints. The spec can then be used to verify the data and will automatically assign the correct Typescript type to the result.
 
 
 ## Design goals
@@ -27,7 +27,8 @@ const productSpec = Type.object({
     price: constrain(Type.number, [Constraint.number.above(0)])
 });
 
-const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.50 }).value();
+const data = JSON.parse('{"description":"Peanut butter","price":3.50}');
+const myProduct = verify(productSpec, data).value();
 // NOTE: myProduct now has the expected typescript type: { description: string, price: number }
 ```
 
@@ -65,6 +66,11 @@ const myProduct = verify(productSpec, { description: "Peanut butter", price: 3.5
 	 - `err.generateReportJson()`: Generate a JSON report of the error details.
 	 - `err.generateErrorPathList()`: Generate a list of paths into the data which failed verification.
 
+* `VerifiedType<Spec>` corresponds to the verification result type of the spec. Example: `type v = VerifiedType<typeof Type.number>; // Equals <number>.`
+* `Spec<T, L>` is the generic type of a spec, where `T` is its result type (as is provided by `VerifiedType`) and `L` is the inferred type with the available local options properties for the spec.
+* `SpecConstraint<T>` defines what a constraint for spec with result type `T` looks like.
+* `GlobalOptions` defines the global options available for each spec, which is optionally passed into `verify`.
+
 ### Schema
 
 A schema describes an object by its attributes and their value specifications. The attributes can be declared optional.
@@ -80,4 +86,10 @@ const exampleObjectSpec = Type.object(exampleSchema);
 type ExampleObjectType = VerifiedType<typeof exampleObjectSpec>;
 // ExampleObjectType corresponds to { numAttr: number, optStrAttr?: string }
 ```
+
+
+## Contributors
+
+* [Dave van Soest](https://github.com/tbknl)
+* [Niek Bruins](https://github.com/pheew)
 
