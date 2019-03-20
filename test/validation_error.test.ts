@@ -183,5 +183,20 @@ describe("validation error", () => {
 
     });
 
+    describe("toString()", () => {
+		const message = "This is just a test";
+
+    	it("prints the message", () => {
+    		const testError = new ValidationError(message);
+    		chai.expect(testError.toString()).to.eql(`ValidationError: ${message}`);
+		});
+
+		it("works when converted to string", () => {
+			const testError = new ValidationError(message);
+			chai.expect(String(testError)).to.eql(`ValidationError: ${message}`);
+		});
+
+	});
+
 });
 

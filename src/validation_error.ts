@@ -7,13 +7,14 @@ interface ValidationErrorJsonReport {
 }
 
 
-export class ValidationError extends Error {
+export class ValidationError {
     private readonly key: ValidationErrorKey | undefined;
     private readonly nestedErrors: ValidationError[];
+    public readonly message: string;
 
     public constructor(message: string, options?: { key?: ValidationErrorKey, nestedErrors?: ValidationError[] }) {
-        super(message);
         this.key = options ? options.key : undefined;
+        this.message = message;
         this.nestedErrors = options && options.nestedErrors || [];
     }
 
@@ -49,6 +50,10 @@ export class ValidationError extends Error {
             errorPathList.push({ path: pathKey, msg: this.message });
         }
         return errorPathList;
+    }
+
+    public toString() {
+        return `ValidationError: ${this.message}`;
     }
 }
 
