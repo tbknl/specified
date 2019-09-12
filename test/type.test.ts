@@ -514,12 +514,12 @@ describe("type", () => {
                     {
                         key: "NotValid",
                         msg: "Evaluation of map key \"NotValid\" failed.",
-                        nested: [{ msg: "Regex mismatch." }]
+                        nested: [{ msg: "String does not match /^[a-z]+$/ regex" }]
                     },
                     {
                         key: "AlsoNotValid",
                         msg: "Evaluation of map key \"AlsoNotValid\" failed.",
-                        nested: [{ msg: "Regex mismatch." }]
+                        nested: [{ msg: "String does not match /^[a-z]+$/ regex" }]
                     }
                 ]
             });

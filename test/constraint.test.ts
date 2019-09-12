@@ -218,6 +218,10 @@ describe("constraint", () => {
                 chai.expect(verify(onlyA, "ABBA").err).to.be.instanceof(ValidationError);
             });
 
+            it("print the regex in the validation error", () => {
+              chai.expect(verify(onlyA, "ABBA").err!.message).to.contain("/^A+$/");
+            });
+
         });
 
         describe("startsWith", () => {

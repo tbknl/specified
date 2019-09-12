@@ -99,7 +99,7 @@ export const Constraint = {
                 tag: "regex",
                 eval: (value: string) => {
                     if (!re.test(value)) {
-                        throw new ValidationError("Regex mismatch.");
+                        throw new ValidationError(`String does not match ${re} regex`);
                     }
                 }
             };
