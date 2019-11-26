@@ -46,7 +46,7 @@ const myProduct = verify(productSpec, data).value();
 	 - `object(schema)`: Accepts object that follow the specified schema (see below).
 	 - `map(keySpec, valueSpec)`: Accepts objects of which all keys are according to `keySpec` and all values according to `valueSpec`.
 	 - `instance(classCtor)`: Accepts instances of the specified class.
-	 - `dateString`: Accepts anything convertable to a date and returns a Date instance.
+	 - `dateString` (DEPRECATED): Accepts anything convertable to a date and returns a Date instance.
 	 - `numeric`: Accepts anything that is convertible to a number.
 
 * `Constraint` contains predefined constraints for some of the types.
