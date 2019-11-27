@@ -5,7 +5,7 @@ export interface GlobalOptions {
     readonly failEarly?: boolean;
 }
 
-interface SpecOptions<LocalOptions extends {} = {}> {
+export interface SpecOptions<LocalOptions extends {} = {}> {
     readonly local?: LocalOptions;
     readonly global: GlobalOptions;
 }
