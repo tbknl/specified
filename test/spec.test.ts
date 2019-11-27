@@ -144,15 +144,15 @@ describe("spec", () => {
             });
 
             it("adds the adjustments to the definition", () => {
-                chai.expect(definitionOf(adjustedSpec).adjustments).to.eql({ strict: false })
+                chai.expect(definitionOf(adjustedSpec).adjustments).to.eql({ strict: false });
             });
 
             it("merges the adjustments to already existing adjustments of the definition", () => {
                 const doubleAdjustedSpec1 = adjust(adjustedSpec, { strict: true, failEarly: true });
-                chai.expect(definitionOf(doubleAdjustedSpec1).adjustments).to.eql({ strict: false, failEarly: true })
+                chai.expect(definitionOf(doubleAdjustedSpec1).adjustments).to.eql({ strict: false, failEarly: true });
 
                 const doubleAdjustedSpec2 = adjust(adjustedSpec, { failEarly: false });
-                chai.expect(definitionOf(doubleAdjustedSpec2).adjustments).to.eql({ strict: false, failEarly: false })
+                chai.expect(definitionOf(doubleAdjustedSpec2).adjustments).to.eql({ strict: false, failEarly: false });
             });
 
         });

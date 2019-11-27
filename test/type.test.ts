@@ -273,14 +273,14 @@ describe("type", () => {
         });
 
         describe("strict", () => {
-            const person = Type.object({
+            const personSpec = Type.object({
                 name: Type.string
             });
-            const strictPerson = adjust(person, { strict: true });
-            const nonStrictPerson = adjust(person, { strict: false });
+            const strictPerson = adjust(personSpec, { strict: true });
+            const nonStrictPerson = adjust(personSpec, { strict: false });
 
             it("rejects additional attributes by default", () => {
-                const result = verify(person, { name: "dave", height: 187 });
+                const result = verify(personSpec, { name: "dave", height: 187 });
                 chai.expect(result.err && result.err.generateReportJson()).to.eql({
                     msg: "Data has attributes that are not part of the schema: \"height\"."
                 });
@@ -571,8 +571,8 @@ describe("type", () => {
     });
 
     describe("map", () => {
-        const keySpec = constrain(Type.string, [Constraint.string.regex(/^[a-z]+$/)]);
-        const testSpec = Type.map(keySpec, Type.array(Type.number));
+        const testKeySpec = constrain(Type.string, [Constraint.string.regex(/^[a-z]+$/)]);
+        const testSpec = Type.map(testKeySpec, Type.array(Type.number));
 
         it("accepts valid keys and values", () => {
             const data = {

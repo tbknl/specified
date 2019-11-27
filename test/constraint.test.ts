@@ -258,7 +258,7 @@ describe("constraint", () => {
         describe("size", () => {
 
             describe("minimum size", () => {
-                const atLeast2 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ min: 2 })])
+                const atLeast2 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ min: 2 })]);
 
                 it("accepts maps with at least the specified size", () => {
                     chai.expect(verify(atLeast2, { a: 1, b: 2 }).value()).to.eql({ a: 1, b: 2 });
@@ -273,7 +273,7 @@ describe("constraint", () => {
             });
 
             describe("maximum size", () => {
-                const atMost4 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ max: 4 })])
+                const atMost4 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ max: 4 })]);
 
                 it("accepts maps with at most the specified size", () => {
                     chai.expect(verify(atMost4, { a: 1, b: 2 }).value()).to.eql({ a: 1, b: 2 });
@@ -287,7 +287,7 @@ describe("constraint", () => {
             });
 
             describe("size in range", () => {
-                const sizeOf2to4 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ min: 2, max: 4 })])
+                const sizeOf2to4 = constrain(Type.map(Type.string, Type.number), [Constraint.map.size({ min: 2, max: 4 })]);
 
                 it("accepts maps with a length in the specified range", () => {
                     chai.expect(verify(sizeOf2to4, { a: 1, b: 2 }).value()).to.eql({ a: 1, b: 2 });
@@ -356,7 +356,7 @@ describe("constraint", () => {
         });
 
         describe("includes", () => {
-            const includes999 = constrain(Type.array(Type.number), [Constraint.array.includes(999)])
+            const includes999 = constrain(Type.array(Type.number), [Constraint.array.includes(999)]);
 
             it("accepts arrays that include the specified value", () => {
                 chai.expect(verify(includes999, [1, 2, 999, 4]).value()).to.eql([1, 2, 999, 4]);
