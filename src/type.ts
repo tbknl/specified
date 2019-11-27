@@ -1,6 +1,29 @@
-import {Spec, SpecOptions, Schema, Model} from "./spec";
+import {Spec} from "./spec";
 import {ValidationError} from "./validation_error";
 
+interface OptionalSpec extends Spec<any, any> { optional: true; }
+interface NonOptionalSpec extends Spec<any, any> { optional?: false; }
+
+type NonOptionalAttributes<S> = {
+    [A in keyof S]: S[A] extends { optional: true } ? never : A;
+};
+
+type OptionalAttributes<S> = {
+    [A in keyof S]: S[A] extends { optional: true } ? A : never;
+};
+
+type NonOptSchema<S> = Pick<S, NonOptionalAttributes<S>[keyof S]>;
+type OptSchema<S> = Pick<S, OptionalAttributes<S>[keyof S]>;
+
+interface Schema {
+    [attr: string]: OptionalSpec | NonOptionalSpec;
+}
+
+type Model<S extends Schema> = {
+    [P in keyof NonOptSchema<S>]: S[P] extends NonOptionalSpec ? ReturnType<S[P]["eval"]> : never;
+} & {
+    [P in keyof OptSchema<S>]?: S[P] extends OptionalSpec ? ReturnType<S[P]["eval"]> : never;
+};
 
 export const Type = {
     unknown: {
@@ -75,7 +98,7 @@ export const Type = {
                 type: "array",
                 nested: { element: spec.definition }
             },
-            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalid?: boolean }>) => {
+            eval: (data: unknown, options: { local?: { failEarly?: boolean, skipInvalid?: boolean }, global: { failEarly?: boolean } }) => {
                 const settings = { failEarly: false, skipInvalid: false, ...options.global, ...options.local };
                 if (!(data instanceof Array)) {
                     throw new ValidationError("Not an array.");
@@ -113,7 +136,7 @@ export const Type = {
                     return o;
                 }, {})
             },
-            eval: (data: unknown, options: SpecOptions<{ strict?: boolean, failEarly?: boolean }>) => {
+            eval: (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
                 const settings = { strict: true, failEarly: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     throw new ValidationError("Not a regular object.");
@@ -166,7 +189,7 @@ export const Type = {
                     value: valueSpec.definition
                 }
             },
-            eval: (data: unknown, options: SpecOptions<{ failEarly?: boolean, skipInvalidKeys?: boolean, skipInvalidValues?: boolean }>) => {
+            eval: (data: unknown, options: { local?: { failEarly?: boolean, skipInvalidKeys?: boolean, skipInvalidValues?: boolean }, global: { failEarly?: boolean } }) => {
                 const settings = { failEarly: false, skipInvalidKeys: false, skipInvalidValues: false, ...options.global, ...options.local };
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     throw new ValidationError("Not a regular object.");

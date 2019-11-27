@@ -5,7 +5,7 @@ export interface GlobalOptions {
     readonly failEarly?: boolean;
 }
 
-export interface SpecOptions<LocalOptions extends {} = {}> {
+interface SpecOptions<LocalOptions extends {} = {}> {
     readonly local?: LocalOptions;
     readonly global: GlobalOptions;
 }
@@ -35,32 +35,6 @@ export interface Spec<T, LocalOpts extends {} = {}> {
 }
 
 export type VerifiedType<S extends Spec<any, any>> = ReturnType<S["eval"]>;
-
-
-interface OptionalSpec extends Spec<any, any> { optional: true; }
-interface NonOptionalSpec extends Spec<any, any> { optional?: false; }
-
-type NonOptionalAttributes<S> = {
-    [A in keyof S]: S[A] extends { optional: true } ? never : A;
-};
-
-type OptionalAttributes<S> = {
-    [A in keyof S]: S[A] extends { optional: true } ? A : never;
-};
-
-type NonOptSchema<S> = Pick<S, NonOptionalAttributes<S>[keyof S]>;
-type OptSchema<S> = Pick<S, OptionalAttributes<S>[keyof S]>;
-
-export interface Schema {
-    [attr: string]: OptionalSpec | NonOptionalSpec;
-}
-
-export type Model<S extends Schema> = {
-    [P in keyof NonOptSchema<S>]: S[P] extends NonOptionalSpec ? ReturnType<S[P]["eval"]> : never;
-} & {
-    [P in keyof OptSchema<S>]?: S[P] extends OptionalSpec ? ReturnType<S[P]["eval"]> : never;
-};
-
 
 interface VerifyResult<T> {
     readonly err: ValidationError | null;
