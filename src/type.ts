@@ -25,6 +25,49 @@ type Model<S extends Schema> = {
     [P in keyof OptSchema<S>]?: S[P] extends OptionalSpec ? ReturnType<S[P]["eval"]> : never;
 };
 
+const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean) => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
+    const settings = { strict: defaultStrict, failEarly: false, ...options.global, ...options.local };
+    if (typeof data !== "object" || data === null || data instanceof Array) {
+        throw new ValidationError("Not a regular object.");
+    }
+    if (settings.strict) {
+        const extraKeys = Object.keys(data).filter(k => !(k in schema));
+        if (extraKeys.length) {
+            throw new ValidationError(`Data has attributes that are not part of the schema: "${extraKeys.join(",")}".`);
+        }
+    }
+    const nestedErrors: ValidationError[] = [];
+    const attributes = Object.keys(schema);
+    const model = {};
+    for (let attrIndex = 0; attrIndex < attributes.length && (!settings.failEarly || !nestedErrors.length); ++attrIndex) {
+        const attr = attributes[attrIndex];
+        const attrSpec = schema[attr];
+        if (!(attr in data) && !attrSpec.optional) {
+            nestedErrors.push(new ValidationError(`Attribute not present: "${attr}".`, { key: attr }));
+        }
+        else {
+            if (!attrSpec.optional || data.hasOwnProperty(attr)) {
+                const value: unknown = data[attr];
+                try {
+                    model[attr] = attrSpec.eval(value, { global: options.global });
+                }
+                catch (err) {
+                    if (err instanceof ValidationError) {
+                        nestedErrors.push(new ValidationError(`Evaluation of attribute "${attr}" failed.`, { key: attr, nestedErrors: [err] }));
+                    }
+                    else {
+                        throw err;
+                    }
+                }
+            }
+        }
+    }
+    if (nestedErrors.length) {
+        throw new ValidationError("Object validation failed.", { nestedErrors });
+    }
+    return model as Model<S>;
+};
+
 export const Type = {
     unknown: {
         definition: {
@@ -136,48 +179,19 @@ export const Type = {
                     return o;
                 }, {})
             },
-            eval: (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
-                const settings = { strict: true, failEarly: false, ...options.global, ...options.local };
-                if (typeof data !== "object" || data === null || data instanceof Array) {
-                    throw new ValidationError("Not a regular object.");
-                }
-                if (settings.strict) {
-                    const extraKeys = Object.keys(data).filter(k => !(k in schema));
-                    if (extraKeys.length) {
-                        throw new ValidationError(`Data has attributes that are not part of the schema: "${extraKeys.join(",")}".`);
-                    }
-                }
-                const nestedErrors: ValidationError[] = [];
-                const attributes = Object.keys(schema);
-                const model = {};
-                for (let attrIndex = 0; attrIndex < attributes.length && (!settings.failEarly || !nestedErrors.length); ++attrIndex) {
-                    const attr = attributes[attrIndex];
-                    const attrSpec = schema[attr];
-                    if (!(attr in data) && !attrSpec.optional) {
-                        nestedErrors.push(new ValidationError(`Attribute not present: "${attr}".`, { key: attr }));
-                    }
-                    else {
-                        if (!attrSpec.optional || data.hasOwnProperty(attr)) {
-                            const value: unknown = data[attr];
-                            try {
-                                model[attr] = attrSpec.eval(value, { global: options.global });
-                            }
-                            catch (err) {
-                                if (err instanceof ValidationError) {
-                                    nestedErrors.push(new ValidationError(`Evaluation of attribute "${attr}" failed.`, { key: attr, nestedErrors: [err] }));
-                                }
-                                else {
-                                    throw err;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (nestedErrors.length) {
-                    throw new ValidationError("Object validation failed.", { nestedErrors });
-                }
-                return model as Model<S>;
-            }
+            eval: objectEval(schema, true)
+        };
+    },
+    interface: <S extends Schema>(schema: S) => {
+        return {
+            definition: {
+                type: "interface",
+                nested: Object.keys(schema).reduce((o, a) => {
+                    o[a] = schema[a].definition;
+                    return o;
+                }, {})
+            },
+            eval: objectEval(schema, false)
         };
     },
     map: <T>(keySpec: Spec<string>, valueSpec: Spec<T>) => {

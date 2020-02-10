@@ -416,6 +416,43 @@ describe("type", () => {
 
     });
 
+    describe("interface", () => {
+        // NOTE: Type.interface shares the implementation with Type.object . More thorough tests can be found for "object".
+
+        describe("strict", () => {
+            const personSpec = Type.interface({
+                name: Type.string
+            });
+
+            it("accepts additional attributes by default", () => {
+                const person = verify(personSpec, { name: "dave", height: 187 }).value();
+                chai.expect(person.name).to.equal("dave");
+            });
+
+        });
+
+        describe("definition", () => {
+            const aSpec = Type.number;
+            const bSpec = optional(Type.string);
+            const ifaceSpec = Type.interface({
+                a: aSpec,
+                b: bSpec
+            });
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(ifaceSpec).type).to.equal("interface");
+            });
+
+            it("uses the schema attributes and their specs definitions for the nested types", () => {
+                chai.expect(definitionOf(ifaceSpec).nested).to.eql({
+                    a: definitionOf(aSpec),
+                    b: definitionOf(bSpec)
+                });
+            });
+
+        });
+
+    });
     describe("array", () => {
         const testSpec = Type.object({
             name: Type.string,
