@@ -177,6 +177,42 @@ describe("type", () => {
 
     });
 
+    describe("booleanKey", () => {
+        const onlyTruthyBooleanKeySpec = Type.booleanKey({ truthy: ["Yes", "1", "true", "ON"] });
+        const truthyAndFalsyBooleanKeySpec = Type.booleanKey({ truthy: ["Yes", "1", "true", "ON"], falsy: ["No", "0", ""] });
+
+        it("accepts a truthy value", () => {
+            chai.expect(verify(onlyTruthyBooleanKeySpec, "Yes").value()).to.equal(true);
+            chai.expect(verify(onlyTruthyBooleanKeySpec, 1).value()).to.equal(true);
+        });
+
+        it("accepts a falsy value", () => {
+            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "No").value()).to.equal(false);
+            chai.expect(verify(truthyAndFalsyBooleanKeySpec, 0).value()).to.equal(false);
+            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "").value()).to.equal(false);
+        });
+
+        it("accepts any value as false if no falsy keys are set", () => {
+            chai.expect(verify(onlyTruthyBooleanKeySpec, "FALSY").value()).to.equal(false);
+            chai.expect(verify(onlyTruthyBooleanKeySpec, "").value()).to.equal(false);
+            chai.expect(verify(onlyTruthyBooleanKeySpec, 1234).value()).to.equal(false);
+        });
+
+        it("rejects a value if it is not set as truthy or falsy while other falsy keys are set", () => {
+            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "InvalidKey").err).to.be.instanceof(ValidationError);
+        });
+
+        it("matches case-different strings if caseInsensitive option is true", () => {
+            const caseInsensitiveBooleanKeySpec = Type.booleanKey({ truthy: ["Yes", "1", "true", "ON"], falsy: ["No", "0", ""] }, { caseInsensitive: true });
+            chai.expect(verify(caseInsensitiveBooleanKeySpec, "yes").value()).to.equal(true);
+            chai.expect(verify(caseInsensitiveBooleanKeySpec, "TRUE").value()).to.equal(true);
+            chai.expect(verify(caseInsensitiveBooleanKeySpec, "on").value()).to.equal(true);
+            chai.expect(verify(caseInsensitiveBooleanKeySpec, "nO").value()).to.equal(false);
+            chai.expect(verify(caseInsensitiveBooleanKeySpec, 0).value()).to.equal(false);
+        });
+
+    });
+
     describe("dateString", () => {
 
         it("accepts a date string", () => {

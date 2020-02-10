@@ -48,6 +48,7 @@ const myProduct = verify(productSpec, data).value();
 	 - `instance(classCtor)`: Accepts instances of the specified class.
 	 - `dateString` (DEPRECATED): Accepts anything convertable to a date and returns a Date instance.
 	 - `numeric`: Accepts anything that is convertible to a number.
+	 - `booleanKey({ truthy: string[], falsy?: string[] })`: Interprets strings as boolean values.
 
 * `Constraint` contains predefined constraints for some of the types.
 

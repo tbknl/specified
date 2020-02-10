@@ -270,6 +270,35 @@ export const Type = {
             }
             return num;
         }
+    },
+    booleanKey: (keys: { truthy: string[], falsy?: string[] }, options?: { caseInsensitive?: boolean }) => {
+        const caseInsensitive = options && options.caseInsensitive;
+        const truthy = keys.truthy.reduce((r, k) => {
+            r[caseInsensitive ? k.toLowerCase() : k] = true;
+            return r;
+        }, {} as { [key: string]: true });
+        const falsy = (keys.falsy || []).reduce((r, k) => {
+            r[caseInsensitive ? k.toLowerCase() : k] = true;
+            return r;
+        }, {} as { [key: string]: true });
+        return {
+            definition: {
+                type: "booleanKey",
+                settings: { keys }
+            },
+            eval: (value: unknown) => {
+                const valueStr = caseInsensitive ? `${value}`.toLowerCase() : `${value}`;
+                if (truthy.hasOwnProperty(valueStr)) {
+                    return true;
+                }
+                else if (!keys.falsy || falsy.hasOwnProperty(valueStr)) {
+                    return false;
+                }
+                else {
+                    throw new ValidationError("Not a valid boolean value.");
+                }
+            }
+        };
     }
 };
 
