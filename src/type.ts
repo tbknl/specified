@@ -1,7 +1,10 @@
 import {Spec} from "./spec";
 import {ValidationError} from "./validation_error";
 
-interface OptionalSpec extends Spec<any, any> { optional: true; }
+interface OptionalSpec extends Spec<any, any> {
+    optional: true;
+    defaultValue?: unknown;
+}
 interface NonOptionalSpec extends Spec<any, any> { optional?: false; }
 
 type NonOptionalAttributes<S> = {
@@ -46,8 +49,10 @@ const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean) => (dat
             nestedErrors.push(new ValidationError(`Attribute not present: "${attr}".`, { key: attr }));
         }
         else {
-            if (!attrSpec.optional || data.hasOwnProperty(attr)) {
-                const value: unknown = data[attr];
+            const pass = Symbol();
+            const value: unknown = !attrSpec.optional ? data[attr] :
+                data.hasOwnProperty(attr) ? data[attr] : attrSpec.hasOwnProperty("defaultValue") ? attrSpec.defaultValue : pass;
+            if (value !== pass) {
                 try {
                     model[attr] = attrSpec.eval(value, { global: options.global });
                 }

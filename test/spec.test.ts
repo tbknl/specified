@@ -7,17 +7,20 @@ describe("spec", () => {
     describe("optional", () => {
         const testSpec = Type.object({
             name: Type.string,
-            age: optional(Type.number)
+            age: optional(Type.number),
+            gender: optional(Type.string, { defaultValue: "unknown" })
         });
 
         it("accepts data in an optional attribute", () => {
             const data = {
                 name: "dave",
-                age: 36
+                age: 36,
+                gender: "male"
             };
             const result = verify(testSpec, data).value();
             chai.expect(result).to.have.property("name").that.equals("dave");
             chai.expect(result).to.have.property("age").that.equals(36);
+            chai.expect(result).to.have.property("gender").that.equals("male");
         });
 
         it("accepts that there is no data for an optional attribute", () => {
@@ -63,6 +66,34 @@ describe("spec", () => {
             });
         });
 
+        it("uses the default value if the data does not contain the optional attribute", () => {
+            const data = {
+                name: "dave",
+                age: 37
+            };
+            const result = verify(testSpec, data).value();
+            chai.expect(result).to.have.property("gender").that.equals("unknown");
+        });
+
+        describe("definition", () => {
+            const innerSpec = Type.object({ a: Type.number });
+            const optSpec = optional(innerSpec);
+            const defaultValue = { a: 123 };
+            const optWithDefaultSpec = optional(innerSpec, { defaultValue });
+
+            it("has the correct definition", () => {
+                chai.expect(definitionOf(optSpec).type).to.equal(definitionOf(innerSpec).type);
+                chai.expect(definitionOf(optWithDefaultSpec).type).to.equal(definitionOf(innerSpec).type);
+                chai.expect(definitionOf(optWithDefaultSpec).defaultValue).to.equal(defaultValue);
+            });
+
+            it("has the optional flag set", () => {
+                chai.expect(definitionOf(optSpec).flags).to.contain("optional");
+                chai.expect(definitionOf(optWithDefaultSpec).flags).to.contain("optional");
+                chai.expect(definitionOf(optSpec)).to.not.have.property("defaultValue");
+            });
+
+        });
     });
 
     describe("constrain", () => {

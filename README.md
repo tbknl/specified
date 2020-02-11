@@ -59,7 +59,7 @@ const myProduct = verify(productSpec, data).value();
 * `constrain(spec, [constraint1, constraint2, ...])`: Adds one or more constraints to a spec.
 * `adjust`: Adjust the local options of a spec, if it has any. For example `adjust(Type.object({}), { strict: false })`.
 * `either(spec1, spec2, ...)` creates a new spec that accepts any of the upto 9 specs provided.
-* `optional(spec)` makes a schema attribute optional.
+* `optional(spec)` and optional(spec, { defaultValue: .. }) make a schema attribute optional, with a potential default value.
 * `definitionOf(spec)` returns the definition of a spec.
 * `alias(spec, alias)` adds a string alias to the spec's definition.
 * `extractAliases(definition)` extracts aliases from a definition.

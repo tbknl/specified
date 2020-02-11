@@ -27,6 +27,7 @@ export interface SpecDefinition {
     readonly constraints?: ConstraintDefinition[];
     readonly adjustments?: object;
     readonly flags?: string[];
+    readonly defaultValue?: unknown;
 }
 
 export interface Spec<T, LocalOpts extends {} = {}> {
@@ -95,14 +96,17 @@ export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, con
 };
 
 
-export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
+export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, options?: { defaultValue?: T }) => {
+    const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
     return {
         definition: {
             ...spec.definition,
-            flags: ["optional"]
+            flags: [...(spec.definition.flags || []), "optional"],
+            ...defaultValue
         },
         eval: spec.eval,
-        optional: true as true
+        optional: true as true,
+        ...defaultValue
     };
 };
 
