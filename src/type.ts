@@ -126,6 +126,17 @@ export const Type = {
             return value;
         }
     },
+	symbol: {
+		definition: {
+			type: "symbol"
+		},
+		eval: (value: unknown) => {
+			if (typeof value !== "symbol") {
+				throw new ValidationError("Not a symbol.");
+			}
+			return value;
+		}
+	},
     literal: <D extends { [k: string]: true | 1 }>(def: D) => {
         return {
             definition: {

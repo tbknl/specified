@@ -41,6 +41,7 @@ const myProduct = verify(productSpec, data).value();
 	 - `string`: Accepts strings.
 	 - `number`: Accepts numbers.
 	 - `boolean`: Accepts booleans.
+     - `symbol`: Accepts symbols.
 	 - `literal({ key1: 1, key2: 1, ... })`: Only accepts the literal values of the keys.
 	 - `array(spec)`: Accepts arrays of which the elements are according to specification `spec`.
 	 - `object(schema)`: Accepts object that follow the specified schema (see below). An object spec is strict by default: it does not except attributes that are not part of the schema.

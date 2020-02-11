@@ -96,6 +96,29 @@ describe("type", () => {
 
     });
 
+	describe("symbol", () => {
+        const mySymbol = Symbol("my");
+        const lookalike = Symbol("my");
+
+        it("accepts symbols", () => {
+            chai.expect(verify(Type.symbol, Symbol()).err).to.equal(null);
+        });
+
+        it("results in the same symbol", () => {
+            chai.expect(verify(Type.symbol, mySymbol).value()).to.equal(mySymbol);
+            chai.expect(verify(Type.symbol, mySymbol).value()).to.not.equal(lookalike);
+        });
+
+        it("rejects non-symbols", () => {
+            chai.expect(verify(Type.symbol, "not-a-symbol").err).to.be.instanceof(ValidationError);
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.symbol)).to.eql({ type: "symbol" });
+        });
+
+    });
+
     describe("literal", () => {
 
         it("accepts the literal value", () => {
