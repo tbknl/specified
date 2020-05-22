@@ -1,4 +1,5 @@
 import * as chai from "chai";
+import { staticAssertIsNotAny, staticAssertIsArray, staticAssertUndefinedNotAllowed } from "./static-assert";
 import { Type, verify, either } from "..";
 
 
@@ -22,9 +23,16 @@ describe("pattern", () => {
                 { type: "square", size: 5 }
             ];
             const shapes = verify(Type.array(shapeSpec), shapesData).value();
+            staticAssertIsNotAny(shapes);
+            staticAssertIsArray(shapes);
+            staticAssertUndefinedNotAllowed(shapes);
+
             shapes.forEach(s => {
+                staticAssertIsNotAny(s);
+                staticAssertUndefinedNotAllowed(s);
+
                 if (s.type === "circle") {
-                    const radius = s.radius; // MOTE: Type-script infers the correct type of radius!
+                    const radius: number = s.radius; // MOTE: Type-script infers the correct type of radius!
                     chai.expect(radius).to.equal(3);
                 }
                 else if (s.type === "square") {

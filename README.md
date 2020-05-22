@@ -15,6 +15,11 @@ Any data flowing into a program at run-time should be checked for validity, whil
 * Easy extensability: simple to create custom convertions and validations.
 
 
+## Upgrade from v0.x to v1.x
+
+TODO: Create separate upgrade doc.
+
+
 ## Examples
 
 Simple short example:
@@ -48,7 +53,6 @@ const myProduct = verify(productSpec, data).value();
 	 - `interface(schema)`: Accepts object that follow the specified schema (see below). an interface spec is, in contrast to the object spec, non-strict by default.
 	 - `map(keySpec, valueSpec)`: Accepts objects of which all keys are according to `keySpec` and all values according to `valueSpec`.
 	 - `instance(classCtor)`: Accepts instances of the specified class.
-	 - `dateString` (DEPRECATED): Accepts anything convertable to a date and returns a Date instance.
 	 - `numeric`: Accepts anything that is convertible to a number.
 	 - `booleanKey({ truthy: string[], falsy?: string[] })`: Interprets strings as boolean values.
 

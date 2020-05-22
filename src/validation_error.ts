@@ -7,15 +7,27 @@ interface ValidationErrorJsonReport {
 }
 
 
-export class ValidationError {
-    private readonly key: ValidationErrorKey | undefined;
-    private readonly nestedErrors: ValidationError[];
-    public readonly message: string;
+interface ValidationFailure {
+    code: string;
+    value: unknown;
+    message: string;
+    key?: string | number;
+    nestedErrors?: ValidationFailure[];
+}
 
-    public constructor(message: string, options?: { key?: ValidationErrorKey, nestedErrors?: ValidationError[] }) {
+export class ValidationError implements ValidationFailure {
+    public readonly nestedErrors: ValidationError[];
+    public readonly message: string;
+    public readonly code: string;
+    public readonly value: unknown;
+    public readonly key: ValidationErrorKey | undefined;
+
+    public constructor(message: string, options?: ValidationFailure) {
         this.key = options ? options.key : undefined;
         this.message = message;
-        this.nestedErrors = options && options.nestedErrors || [];
+        this.code = options ? options.code : "";
+        this.value = options ? options.value : undefined;
+        this.nestedErrors = options && options.nestedErrors ? options.nestedErrors.map(ne => new ValidationError(ne.message, ne)) : [];
     }
 
     public getKey() {
@@ -27,29 +39,11 @@ export class ValidationError {
     }
 
     public generateReportJson(): ValidationErrorJsonReport {
-        const keyProp = typeof this.key === "undefined" ? {} : { key: this.key };
-        const nestedProp = this.nestedErrors.length ? { nested: this.nestedErrors.map(ve => ve.generateReportJson()) } : {};
-        return {
-            msg: this.message,
-            ...keyProp,
-            ...nestedProp
-        };
+        return FormatValidationError.generateReportJson(this);
     }
 
     public generateErrorPathList() {
-        const errorPathList: { path: ValidationErrorKey[], msg: string }[] = [];
-        const pathKey = typeof this.key !== "undefined" ? [this.key] : [];
-        if (this.nestedErrors.length) {
-            this.nestedErrors.forEach(ne => {
-                errorPathList.push(...ne.generateErrorPathList().map(nep => {
-                    return { path: pathKey.concat(nep.path), msg: nep.msg };
-                }));
-            });
-        }
-        else {
-            errorPathList.push({ path: pathKey, msg: this.message });
-        }
-        return errorPathList;
+        return FormatValidationError.generateErrorPathList(this);
     }
 
     public toString() {
@@ -57,3 +51,29 @@ export class ValidationError {
     }
 }
 
+export const FormatValidationError = {
+    generateReportJson(err: ValidationFailure): ValidationErrorJsonReport {
+        const keyProp = typeof err.key === "undefined" ? {} : { key: err.key };
+        const nestedProp = err.nestedErrors ? { nested: err.nestedErrors.map(ve => this.generateReportJson(ve)) } : {};
+        return {
+            msg: err.message,
+            ...keyProp,
+            ...nestedProp
+        };
+    },
+    generateErrorPathList(err: ValidationFailure) {
+        const errorPathList: { path: ValidationErrorKey[], msg: string }[] = [];
+        const pathKey = typeof err.key !== "undefined" ? [err.key] : [];
+        if (err.nestedErrors) {
+            err.nestedErrors.forEach(ne => {
+                errorPathList.push(...this.generateErrorPathList(ne).map(nep => {
+                    return { path: pathKey.concat(nep.path), msg: nep.msg };
+                }));
+            });
+        }
+        else {
+            errorPathList.push({ path: pathKey, msg: err.message });
+        }
+        return errorPathList;
+    }
+};

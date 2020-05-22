@@ -1,6 +1,14 @@
 import {ValidationError} from "./validation_error";
 
 
+export interface ValidationFailure {
+    code: string;
+    value: unknown;
+    message: string;
+    key?: string | number;
+    nestedErrors?: ValidationFailure[];
+}
+
 export interface GlobalOptions {
     readonly failEarly?: boolean;
 }
@@ -16,7 +24,7 @@ export interface ConstraintDefinition {
 }
 
 export interface SpecConstraint<T> {
-    readonly eval: (value: T) => void;
+    readonly eval: (value: T) => { err?: ValidationFailure | null };
     readonly definition: ConstraintDefinition;
 }
 
@@ -30,40 +38,49 @@ export interface SpecDefinition {
     readonly defaultValue?: unknown;
 }
 
-export interface Spec<T, LocalOpts extends {} = {}> {
-    readonly eval: (value: unknown, options: SpecOptions<LocalOpts>) => T;
+type EvalResultFailure = { err: ValidationFailure; };
+type EvalResultSuccess<T> = { err: null; value: T; };
+export type EvalResult<T> = EvalResultFailure | EvalResultSuccess<T>;
+
+export interface Spec<R extends EvalResult<any>, LocalOpts extends {} = {}> {
+    readonly eval: (value: unknown, options: SpecOptions<LocalOpts>) => R;
     readonly definition: SpecDefinition;
 }
 
-export type VerifiedType<S extends Spec<any, any>> = ReturnType<S["eval"]>;
+export type VerifiedType<S extends Spec<any, any>> = Extract<ReturnType<S["eval"]>, { err: null }>["value"];
+export type EvalResultOf<S extends Spec<any, any>> = EvalResultFailure | EvalResultSuccess<VerifiedType<S>>;
+export type LocalOptionsOf<S extends Spec<any, any>> = Required<Parameters<S["eval"]>[1]>["local"];
 
 interface VerifyResult<T> {
-    readonly err: ValidationError | null;
+    readonly err: ValidationFailure | null; // TODO: Use ValidationFailure instead of ValidationError.
     readonly value: () => T;
 }
 
-export const verify = <T>(spec: Spec<T, {}>, value: unknown, globalOptions: GlobalOptions = {}): VerifyResult<T> => {
-    try {
-        const result = spec.eval(value, { global: globalOptions });
+interface VerifyOptions {
+    errorClass: new (msg: string, err: ValidationFailure) => ValidationFailure;
+}
+
+// TODO: Document backwards-incompatibility: result.err is of type ValidationFailure, has no report generating functions in it. Upgrade path: ...
+export const verify = <S extends Spec<EvalResult<any>, {}>>(spec: S, value: unknown, globalOptions: GlobalOptions = {}, verifyOptions: VerifyOptions = { errorClass: ValidationError }): VerifyResult<VerifiedType<S>> => {
+    const result = spec.eval(value, { global: globalOptions });
+    if (result.err) {
         return {
-            err: null,
-            value: () => result
+            err: result.err,
+            value: (): VerifiedType<S> => {
+                throw new verifyOptions.errorClass(result.err.message, result.err);
+            }
         };
     }
-    catch (err) {
-        if (err instanceof ValidationError) {
-            const validationError = err;
-            return {
-                err: validationError,
-                value: (): T => { throw validationError; }
-            };
-        }
-        throw err;
+    else {
+        return {
+            err: null,
+            value: () => result.value
+        };
     }
 };
 
 
-export const alias = <T, LocalOpts extends {}>(aliasName: string, spec: Spec<T, LocalOpts>) => {
+export const alias = <S extends Spec<EvalResult<any>, any>>(aliasName: string, spec: S): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
     return {
         definition: {
             ...spec.definition,
@@ -74,29 +91,36 @@ export const alias = <T, LocalOpts extends {}>(aliasName: string, spec: Spec<T, 
 };
 
 
-const removeAlias = (specDef: SpecDefinition) => {
+const removeAlias = (specDef: SpecDefinition): SpecDefinition => {
     const def = { ...specDef };
     delete def.alias;
     return def;
 };
 
 
-export const constrain = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, constraints: Array<SpecConstraint<T>>): Spec<T, LocalOpts> => {
+export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constraints: Array<SpecConstraint<VerifiedType<S>>>): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
     return {
         definition: {
             ...removeAlias(spec.definition),
             constraints: [...(spec.definition.constraints || []), ...constraints.map(c => c.definition)]
         },
-        eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
+        eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>): EvalResultOf<S> => {
             const candidateResult = spec.eval(value, options);
-            constraints.forEach(c => c.eval(candidateResult));
+            if (!candidateResult.err) {
+                for (let c of constraints) {
+                    const { err } = c.eval(candidateResult.value);
+                    if (err) {
+                        return { err };
+                    }
+                }
+            }
             return candidateResult;
         }
     };
 };
 
 
-export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, options?: { defaultValue?: T }) => {
+export const optional = <S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }) => {
     const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
     return {
         definition: {
@@ -111,20 +135,20 @@ export const optional = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, opti
 };
 
 
-export const adjust = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>, adjustedOptions: LocalOpts): Spec<T, LocalOpts> => {
+export const adjust = <S extends Spec<EvalResult<any>, any>>(spec: S, adjustedOptions: LocalOptionsOf<S>): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
     return {
         definition: {
             ...removeAlias(spec.definition),
             adjustments: { ...adjustedOptions, ...spec.definition.adjustments }
         },
-        eval: (value: unknown, options: SpecOptions<LocalOpts>) => {
+        eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>) => {
             return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
         }
     };
 };
 
 
-export const definitionOf = <T, LocalOpts extends {}>(spec: Spec<T, LocalOpts>) => {
+export const definitionOf = <S extends Spec<EvalResult<any>, any>>(spec: S) => {
     return spec.definition;
 };
 
@@ -162,16 +186,26 @@ export const extractAliases = (def: SpecDefinition) => {
 };
 
 
-export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T7 = never, T8 = never, T9 = never>(
-        spec1: Spec<T1, {}>,
-        spec2: Spec<T2, {}>,
-        spec3?: Spec<T3, {}>,
-        spec4?: Spec<T4, {}>,
-        spec5?: Spec<T5, {}>,
-        spec6?: Spec<T6, {}>,
-        spec7?: Spec<T7, {}>,
-        spec8?: Spec<T8, {}>,
-        spec9?: Spec<T9, {}>
+export const either = <
+    R1 extends EvalResult<any>, 
+    R2 extends EvalResult<any>, 
+    R3 extends EvalResult<any> = never,
+    R4 extends EvalResult<any> = never,
+    R5 extends EvalResult<any> = never,
+    R6 extends EvalResult<any> = never,
+    R7 extends EvalResult<any> = never,
+    R8 extends EvalResult<any> = never,
+    R9 extends EvalResult<any> = never
+    >(
+        spec1: Spec<R1, {}>,
+        spec2: Spec<R2, {}>,
+        spec3?: Spec<R3, {}>,
+        spec4?: Spec<R4, {}>,
+        spec5?: Spec<R5, {}>,
+        spec6?: Spec<R6, {}>,
+        spec7?: Spec<R7, {}>,
+        spec8?: Spec<R8, {}>,
+        spec9?: Spec<R9, {}>
     ) => {
     const nested = {
         1: spec1.definition,
@@ -189,53 +223,56 @@ export const either = <T1, T2, T3 = never, T4 = never, T5 = never, T6 = never, T
             type: "either",
             nested
         },
-        eval: (value: unknown, options: SpecOptions): T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9  => {
-            const validationErrors: ValidationError[] = [];
+        eval: (value: unknown, options: SpecOptions): R1| R2| R3| R4| R5| R6| R7| R8| R9 | EvalResultFailure => {
+            const validationErrors: ValidationFailure[] = [];
 
-            const resultSpec1 = verify(spec1, value, options.global);
-            if (resultSpec1.err) { validationErrors.push(resultSpec1.err); } else { return resultSpec1.value(); }
+            const resultSpec1 = spec1.eval(value, { global: options.global });
+            if (resultSpec1.err) { validationErrors.push(resultSpec1.err); } else { return resultSpec1; }
 
-            const resultSpec2 = verify(spec2, value, options.global);
-            if (resultSpec2.err) { validationErrors.push(resultSpec2.err); } else { return resultSpec2.value(); }
+            const resultSpec2 = spec2.eval(value, { global: options.global });
+            if (resultSpec2.err) { validationErrors.push(resultSpec2.err); } else { return resultSpec2; }
 
             if (spec3) {
-                const resultSpec3 = verify(spec3, value, options.global);
-                if (resultSpec3.err) { validationErrors.push(resultSpec3.err); } else { return resultSpec3.value(); }
+                const resultSpec3 = spec3.eval(value, { global: options.global });
+                if (resultSpec3.err) { validationErrors.push(resultSpec3.err); } else { return resultSpec3; }
             }
 
             if (spec4) {
-                const resultSpec4 = verify(spec4, value, options.global);
-                if (resultSpec4.err) { validationErrors.push(resultSpec4.err); } else { return resultSpec4.value(); }
+                const resultSpec4 = spec4.eval(value, { global: options.global });
+                if (resultSpec4.err) { validationErrors.push(resultSpec4.err); } else { return resultSpec4; }
             }
 
             if (spec5) {
-                const resultSpec5 = verify(spec5, value, options.global);
-                if (resultSpec5.err) { validationErrors.push(resultSpec5.err); } else { return resultSpec5.value(); }
+                const resultSpec5 = spec5.eval(value, { global: options.global });
+                if (resultSpec5.err) { validationErrors.push(resultSpec5.err); } else { return resultSpec5; }
             }
 
             if (spec6) {
-                const resultSpec6 = verify(spec6, value, options.global);
-                if (resultSpec6.err) { validationErrors.push(resultSpec6.err); } else { return resultSpec6.value(); }
+                const resultSpec6 = spec6.eval(value, { global: options.global });
+                if (resultSpec6.err) { validationErrors.push(resultSpec6.err); } else { return resultSpec6; }
             }
 
             if (spec7) {
-                const resultSpec7 = verify(spec7, value, options.global);
-                if (resultSpec7.err) { validationErrors.push(resultSpec7.err); } else { return resultSpec7.value(); }
+                const resultSpec7 = spec7.eval(value, { global: options.global });
+                if (resultSpec7.err) { validationErrors.push(resultSpec7.err); } else { return resultSpec7; }
             }
 
             if (spec8) {
-                const resultSpec8 = verify(spec8, value, options.global);
-                if (resultSpec8.err) { validationErrors.push(resultSpec8.err); } else { return resultSpec8.value(); }
+                const resultSpec8 = spec8.eval(value, { global: options.global });
+                if (resultSpec8.err) { validationErrors.push(resultSpec8.err); } else { return resultSpec8; }
             }
 
             if (spec9) {
-                const resultSpec9 = verify(spec9, value, options.global);
-                if (resultSpec9.err) { validationErrors.push(resultSpec9.err); } else { return resultSpec9.value(); }
+                const resultSpec9 = spec9.eval(value, { global: options.global });
+                if (resultSpec9.err) { validationErrors.push(resultSpec9.err); } else { return resultSpec9; }
             }
 
-            throw new ValidationError("Evaluation of value failed for every possible spec.", {
+            return { err: {
+                code: "either.no_matching_spec",
+                value,
+                message: "Evaluation of value failed for every possible spec.",
                 nestedErrors: validationErrors
-            });
+            } };
         }
     };
 };

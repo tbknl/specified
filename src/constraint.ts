@@ -1,6 +1,3 @@
-import {ValidationError} from "./validation_error";
-
-
 export const Constraint = {
     generic: {
         oneOf: <T>(...options: T[]) => {
@@ -10,9 +7,11 @@ export const Constraint = {
                     settings: { options }
                 },
                 eval: (value: T) => {
-                    if (options.indexOf(value) < 0) {
-                        throw new ValidationError("Not one of the accepted options.");
-                    }
+                    return { err: options.indexOf(value) < 0 ? {
+                        code: "constraint.generic.oneOf.unknown_value",
+                        value,
+                        message: "Not one of the accepted options."
+                    } : null };
                 }
             };
         }
@@ -23,9 +22,11 @@ export const Constraint = {
                 name: "integer"
             },
             eval: (value: number) => {
-                if (value % 1 !== 0) {
-                    throw new ValidationError("Not an integer.");
-                }
+                return { err: value % 1 !== 0 ? {
+                    code: "constraint.number.integer",
+                    value,
+                    message: "Not an integer."
+                } : null };
             }
         },
         finite: {
@@ -33,9 +34,11 @@ export const Constraint = {
                 name: "finite"
             },
             eval: (value: number) => {
-                if (!Number.isFinite(value)) {
-                    throw new ValidationError("Not a finite number.");
-                }
+                return { err: !Number.isFinite(value) ? {
+                    code: "constraint.number.finite",
+                    value,
+                    message: "Not a finite number."
+                } : null };
             }
         },
         above:  (lowerLimit: number) => {
@@ -45,9 +48,11 @@ export const Constraint = {
                     settings: { lowerLimit }
                 },
                 eval: (value: number) => {
-                    if (!(value > lowerLimit)) {
-                        throw new ValidationError(`Not above ${lowerLimit}.`);
-                    }
+                    return { err: !(value > lowerLimit) ? {
+                        code: "constraint.number.above",
+                        value,
+                        message: `Not above ${lowerLimit}.`
+                    } : null };
                 }
             };
         },
@@ -58,9 +63,11 @@ export const Constraint = {
                     settings: { upperLimit }
                 },
                 eval: (value: number) => {
-                    if (!(value < upperLimit)) {
-                        throw new ValidationError(`Not below ${upperLimit}.`);
-                    }
+                    return { err: !(value < upperLimit) ? {
+                        code: "constraint.number.below",
+                        value,
+                        message: `Not below ${upperLimit}.`
+                    } : null };
                 }
             };
         },
@@ -71,9 +78,11 @@ export const Constraint = {
                     settings: { lowerLimit }
                 },
                 eval: (value: number) => {
-                    if (!(value >= lowerLimit)) {
-                        throw new ValidationError(`Less than ${lowerLimit}.`);
-                    }
+                    return { err: !(value >= lowerLimit) ? {
+                        code: "constraint.number.atLeast",
+                        value,
+                        message: `Less than ${lowerLimit}.`
+                    } : null };
                 }
             };
         },
@@ -84,9 +93,11 @@ export const Constraint = {
                     settings: { upperLimit }
                 },
                 eval: (value: number) => {
-                    if (!(value <= upperLimit)) {
-                        throw new ValidationError(`Larger than ${upperLimit}.`);
-                    }
+                    return { err: !(value <= upperLimit) ? {
+                        code: "constraint.number.atMost",
+                        value,
+                        message: `Larger than ${upperLimit}.`
+                    } : null };
                 }
             };
         }
@@ -97,9 +108,11 @@ export const Constraint = {
                 name: "notEmpty"
             },
             eval: (value: string) => {
-                if (value === "") {
-                    throw new ValidationError("Empty string.");
-                }
+                return { err: value === "" ? {
+                    code: "constraint.string.notEmpty",
+                    value,
+                    message: "Empty string."
+                } : null };
             }
         },
         length: ({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
@@ -110,24 +123,35 @@ export const Constraint = {
                 },
                 eval: (value: string) => {
                     if (typeof min !== "undefined" && value.length < min) {
-                        throw new ValidationError(`String length less than ${min}`);
+                        return { err: {
+                            code: "constraint.string.length.too_short",
+                            value,
+                            message: `String length less than ${min}`
+                        } };
                     }
                     else if (typeof max !== "undefined" && value.length > max) {
-                        throw new ValidationError(`String length greater than ${max}`);
+                        return { err: {
+                            code: "constraint.string.length.too_long",
+                            value,
+                            message: `String length greater than ${max}`
+                        } };
                     }
+                    return { err: null };
                 }
             };
         },
-        regex: (re: RegExp) => {
+        regex: (re: RegExp, custom: { errorMessage: string; errorCode: string; } = { errorMessage: "Regex mismatch.", errorCode: "constraint.string.regex" }) => {
             return {
                 definition: {
                     name: "regex",
                     settings: { expression: re.source }
                 },
                 eval: (value: string) => {
-                    if (!re.test(value)) {
-                        throw new ValidationError("Regex mismatch.");
-                    }
+                    return { err: !re.test(value) ? {
+                        code: custom.errorCode,
+                        value,
+                        message: custom.errorMessage
+                    } : null };
                 }
             };
         },
@@ -138,9 +162,11 @@ export const Constraint = {
                     settings: { prefix }
                 },
                 eval: (value: string) => {
-                    if (value.substr(0, prefix.length) !== prefix) {
-                        throw new ValidationError(`String does not start with '${prefix}'.`);
-                    }
+                    return { err: value.substr(0, prefix.length) !== prefix ? {
+                        code: "constraint.string.startsWith",
+                        value,
+                        message: `String does not start with '${prefix}'.`
+                    } : null };
                 }
             };
         },
@@ -151,9 +177,11 @@ export const Constraint = {
                     settings: { suffix }
                 },
                 eval: (value: string) => {
-                    if (value.substr(value.length - suffix.length) !== suffix) {
-                        throw new ValidationError(`String does not end with '${suffix}'.`);
-                    }
+                    return { err: value.substr(value.length - suffix.length) !== suffix ? {
+                        code: "constraint.string.endsWith",
+                        value,
+                        message: `String does not end with '${suffix}'.`
+                    } : null };
                 }
             };
         }
@@ -168,11 +196,20 @@ export const Constraint = {
                 eval: (value: T) => {
                     const numKeys = Object.keys(value).length ;
                     if (typeof min !== "undefined" && numKeys < min) {
-                        throw new ValidationError(`Object size less than ${min}`);
+                        return { err: {
+                            code: "constraint.map.size.too_small",
+                            value,
+                            message: `Object size less than ${min}`
+                        } };
                     }
                     else if (typeof max !== "undefined" && numKeys > max) {
-                        throw new ValidationError(`Object size greater than ${max}`);
+                        return { err: {
+                            code: "constraint.map.size.too_large",
+                            value,
+                            message: `Object size greater than ${max}`
+                        } };
                     }
+                    return { err: null };
                 }
             };
         }
@@ -185,12 +222,19 @@ export const Constraint = {
                     settings: { min, max }
                 },
                 eval: (value: T[]) => {
-                    if (typeof min !== "undefined" && value.length < min) {
-                        throw new ValidationError(`Array length less than ${min}`);
-                    }
-                    else if (typeof max !== "undefined" && value.length > max) {
-                        throw new ValidationError(`Array length greater than ${max}`);
-                    }
+                    return { err:
+                        (typeof min !== "undefined" && value.length < min) ? {
+                            code: "constraint.array.length.too_short",
+                            value,
+                            message: `Array length less than ${min}`
+                        } :
+                        (typeof max !== "undefined" && value.length > max) ? {
+                            code: "constraint.array.length.too_long",
+                            value,
+                            message: `Array length greater than ${max}`
+                        } :
+                        null
+                    };
                 }
             };
         },
@@ -201,9 +245,11 @@ export const Constraint = {
                     settings: { value: includedValue }
                 },
                 eval: (value: T[]) => {
-                    if (value.indexOf(includedValue) < 0) {
-                        throw new ValidationError("Value is not included in array.");
-                    }
+                    return { err: value.indexOf(includedValue) < 0 ? {
+                        code: "constraint.array.includes",
+                        value,
+                        message: "Value is not included in array."
+                    } : null };
                 }
             };
         }
