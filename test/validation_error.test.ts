@@ -1,5 +1,11 @@
 import * as chai from "chai";
-import { Type, verify, ValidationError, either } from "..";
+import { Type, verify, ValidationError, FormatValidationError, either } from "..";
+
+const dummyValidationFailure = {
+    code: "dummy",
+    value: "Dummy",
+    message: "dummy failure"
+};
 
 
 describe("validation error", () => {
@@ -14,12 +20,12 @@ describe("validation error", () => {
 
         it("returns the key provided to the constructor", () => {
             const key = 1234;
-            const validationError = new ValidationError("message", { key });
+            const validationError = new ValidationError("message", { ...dummyValidationFailure, key });
             chai.expect(validationError.getKey()).to.equal(key);
         });
 
         it("returns undefined when no key was provided to the constructor", () => {
-            const validationError = new ValidationError("message", {});
+            const validationError = new ValidationError("message", { ...dummyValidationFailure });
             chai.expect(validationError.getKey()).to.equal(undefined);
         });
 
@@ -29,15 +35,15 @@ describe("validation error", () => {
 
         it("returns the nested errors provided to the constructor", () => {
             const nestedErrors = [
-                new ValidationError("Nested 1"),
-                new ValidationError("Nested 2")
+                new ValidationError("Nested 1", { ...dummyValidationFailure }),
+                new ValidationError("Nested 2", { ...dummyValidationFailure })
             ];
-            const validationError = new ValidationError("message", { nestedErrors });
+            const validationError = new ValidationError("message", { ...dummyValidationFailure, nestedErrors });
             chai.expect(validationError.getNestedErrors()).to.eql(nestedErrors);
         });
 
         it("returns an empty array when no nested errors were provided to the constructor", () => {
-            const validationError = new ValidationError("message", {});
+            const validationError = new ValidationError("message", { ...dummyValidationFailure });
             chai.expect(validationError.getNestedErrors()).to.eql([]);
         });
 
@@ -51,9 +57,9 @@ describe("validation error", () => {
                 arrayMap: { x: [1, 2, 3], y: "NotAnArray", z: [7, "eight", 9] }
             };
             const result = verify(nestedSpec, data);
-            chai.expect(result.err).to.be.instanceof(ValidationError);
-            chai.expect(result.err && result.err.generateReportJson()).to.eql({
-				msg: "Object validation failed.",
+            chai.expect(result.err).to.be.an("object")
+            chai.expect(result.err && FormatValidationError.generateReportJson(result.err)).to.eql({
+				msg: "Invalid attribute data.",
 				nested: [
 					{
 						key: "objArray",
@@ -65,14 +71,28 @@ describe("validation error", () => {
 									{
 										key: 1,
 										msg: "Evaluation of array element at index \"1\" failed.",
-										nested: [{ msg: "Data has attributes that are not part of the schema: \"b\"." }]
+										nested: [
+                                            {
+                                                msg: "Invalid attribute data.",
+                                                nested: [
+                                                    {
+                                                        key: "b",
+                                                        msg: "Data has attribute that is not part of the strict schema: \"b\"."
+                                                    },
+                                                    {
+                                                        key: "a",
+                                                        msg: "Missing attribute: \"a\"."
+                                                    }
+                                                ]
+                                            }
+                                        ]
 									},
 									{
 										key: 2,
 										msg: "Evaluation of array element at index \"2\" failed.",
 										nested: [
 											{
-												msg: "Object validation failed.",
+												msg: "Invalid attribute data.",
 												nested: [
 													{
 														key: "a",
@@ -92,7 +112,7 @@ describe("validation error", () => {
 						msg: "Evaluation of attribute \"arrayMap\" failed.",
 						nested: [
 							{
-								msg: "Map validation failed.",
+								msg: "Invalid map data.",
 								nested: [
 									{
 										key: "y",
@@ -133,11 +153,15 @@ describe("validation error", () => {
 				arrayMap: { x: [1, 2, 3], y: "NotAnArray", z: [7, "eight", 9] }
 			};
 			const result = verify(nestedSpec, data);
-			chai.expect(result.err).to.be.instanceof(ValidationError);
-			chai.expect(result.err && result.err.generateErrorPathList()).to.eql([
+            chai.expect(result.err).to.be.an("object")
+            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
                 {
-                    msg: "Data has attributes that are not part of the schema: \"b\".",
-                    path: ["objArray", 1]
+                    msg: "Data has attribute that is not part of the strict schema: \"b\".",
+                    path: ["objArray", 1, "b"]
+                },
+                {
+                    msg: "Missing attribute: \"a\".",
+                    path: ["objArray", 1, "a"]
                 },
                 {
                     msg: "Not a number.",
@@ -156,7 +180,7 @@ describe("validation error", () => {
 
         it("generates an empty path for non-nested specs", () => {
             const result = verify(Type.number, "bla");
-			chai.expect(result.err && result.err.generateErrorPathList()).to.eql([
+            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Not a number.",
                     path: []
@@ -169,7 +193,7 @@ describe("validation error", () => {
                 a: either(Type.number, Type.string)
             });
             const result = verify(objectEitherSpec, { a: [] });
-			chai.expect(result.err && result.err.generateErrorPathList()).to.eql([
+            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Not a number.",
                     path: ["a"]

@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, Constraint, ValidationError } from "..";
+import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, Constraint } from "..";
 
 
 describe("type", () => {
@@ -29,11 +29,11 @@ describe("type", () => {
         });
 
         it("rejects non-null values", () => {
-            chai.expect(verify(Type.null, 0).err).to.be.instanceof(ValidationError);
-            chai.expect(verify(Type.null, false).err).to.be.instanceof(ValidationError);
-            chai.expect(verify(Type.null, undefined).err).to.be.instanceof(ValidationError);
-            chai.expect(verify(Type.null, []).err).to.be.instanceof(ValidationError);
-            chai.expect(verify(Type.null, {}).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.null, 0).err).to.have.property("code", "type.null.not_null");
+            chai.expect(verify(Type.null, false).err).to.have.property("code", "type.null.not_null");
+            chai.expect(verify(Type.null, undefined).err).to.have.property("code", "type.null.not_null");
+            chai.expect(verify(Type.null, []).err).to.have.property("code", "type.null.not_null");
+            chai.expect(verify(Type.null, {}).err).to.have.property("code", "type.null.not_null");
         });
 
         it("has the correct definition type", () => {
@@ -50,7 +50,7 @@ describe("type", () => {
         });
 
         it("rejects non-numbers", () => {
-            chai.expect(verify(Type.number, "456").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.number, "456").err).to.have.property("code", "type.number.not_a_number");
         });
 
         it("has the correct definition type", () => {
@@ -67,7 +67,7 @@ describe("type", () => {
         });
 
         it("rejects non-strings", () => {
-            chai.expect(verify(Type.string, { not: "a string" }).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.string, { not: "a string" }).err).to.have.property("code", "type.string.not_a_string");
         });
 
         it("has the correct definition type", () => {
@@ -87,7 +87,7 @@ describe("type", () => {
         });
 
         it("rejects non-booleans", () => {
-            chai.expect(verify(Type.boolean, 1).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.boolean, 1).err).to.have.property("code", "type.boolean.not_a_boolean");
         });
 
         it("has the correct definition type", () => {
@@ -110,7 +110,7 @@ describe("type", () => {
         });
 
         it("rejects non-symbols", () => {
-            chai.expect(verify(Type.symbol, "not-a-symbol").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.symbol, "not-a-symbol").err).to.have.property("code", "type.symbol.not_a_symbol");
         });
 
         it("has the correct definition type", () => {
@@ -133,12 +133,12 @@ describe("type", () => {
 
         it("rejects values not in the literal list", () => {
             const value1or2 = Type.literal({ value1: 1, value2: 1 });
-            chai.expect(verify(value1or2, "value3").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(value1or2, "value3").err).to.have.property("code", "type.literal.incorrect_literal");
         });
 
         it("rejects non-string values", () => {
             const value1or2 = Type.literal({ 123: 1, 456: 1 });
-            chai.expect(verify(value1or2, 123).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(value1or2, 123).err).to.have.property("code", "type.literal.incorrect_literal");
         });
 
         it("has the correct definition type", () => {
@@ -161,11 +161,11 @@ describe("type", () => {
 
         it("rejects instances of other classes", () => {
             class MyOtherClass {}
-            chai.expect(verify(myClassSpec, new MyOtherClass()).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(myClassSpec, new MyOtherClass()).err).to.have.property("code", "type.instance.not_an_instance_of");
         });
 
         it("rejects non-class objects", () => {
-            chai.expect(verify(myClassSpec, {}).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(myClassSpec, {}).err).to.have.property("code", "type.instance.not_an_instance_of");
         });
 
         it("has the correct definition type", () => {
@@ -195,7 +195,7 @@ describe("type", () => {
         });
 
         it("rejects non-numbers", () => {
-            chai.expect(verify(Type.numeric, "abc").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(Type.numeric, "abc").err).to.have.property("code", "type.numeric.not_a_finite_number");
         });
 
     });
@@ -222,7 +222,7 @@ describe("type", () => {
         });
 
         it("rejects a value if it is not set as truthy or falsy while other falsy keys are set", () => {
-            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "InvalidKey").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "InvalidKey").err).to.have.property("code", "type.booleanKey.invalid_key");
         });
 
         it("matches case-different strings if caseInsensitive option is true", () => {
@@ -232,19 +232,6 @@ describe("type", () => {
             chai.expect(verify(caseInsensitiveBooleanKeySpec, "on").value()).to.equal(true);
             chai.expect(verify(caseInsensitiveBooleanKeySpec, "nO").value()).to.equal(false);
             chai.expect(verify(caseInsensitiveBooleanKeySpec, 0).value()).to.equal(false);
-        });
-
-    });
-
-    describe("dateString", () => {
-
-        it("accepts a date string", () => {
-            const myDateString = "2019-02-09T15:44:38.020Z";
-            chai.expect(verify(Type.dateString, myDateString).value().getTime()).to.equal(new Date(myDateString).getTime());
-        });
-
-        it("rejects non-date-strings", () => {
-            chai.expect(verify(Type.dateString, "abc").err).to.be.instanceof(ValidationError);
         });
 
     });
@@ -263,7 +250,6 @@ describe("type", () => {
                     age: 36
                 };
                 const myModel: { name: string, age: number } = verify(personSpec, data).value();
-                chai.expect(myModel).to.not.be.an.instanceof(ValidationError);
                 chai.expect(myModel).to.have.property("name").that.equals("dave");
                 chai.expect(myModel).to.have.property("age").that.equals(36);
             });
@@ -274,17 +260,12 @@ describe("type", () => {
                     age: "36"
                 };
                 const result = verify(personSpec, data);
-                chai.expect(result.err).to.be.instanceof(ValidationError);
-                chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                    msg: "Object validation failed.",
-                    nested: [
-                        {
-                            key: "age",
-                            msg: "Evaluation of attribute \"age\" failed.",
-                            nested: [{ msg: "Not a number." }]
-                        }
-                    ]
-                });
+                chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+                chai.expect(result.err).to.have.property("nestedErrors").to.have.length(1);
+                const nestedError = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+                chai.expect(nestedError).to.have.property("code", "type.object.invalid_attribute");
+                chai.expect(nestedError).to.have.property("key", "age");
+                chai.expect(nestedError).to.have.property("value", "36");
             });
 
             it("rejects incomplete data", () => {
@@ -292,16 +273,11 @@ describe("type", () => {
                     age: 36
                 };
                 const result = verify(personSpec, data);
-                chai.expect(result.err).to.be.instanceof(ValidationError);
-                chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                    msg: "Object validation failed.",
-                    nested: [
-                        {
-                            key: "name",
-                            msg: "Attribute not present: \"name\"."
-                        }
-                    ]
-                });
+                chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+                chai.expect(result.err).to.have.property("nestedErrors").to.have.length(1);
+                const nestedError = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+                chai.expect(nestedError).to.have.property("code", "type.object.missing_attribute");
+                chai.expect(nestedError).to.have.property("key", "name");
             });
         });
 
@@ -339,21 +315,31 @@ describe("type", () => {
             const nonStrictPerson = adjust(personSpec, { strict: false });
 
             it("rejects additional attributes by default", () => {
-                const result = verify(personSpec, { name: "dave", height: 187 });
-                chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                    msg: "Data has attributes that are not part of the schema: \"height\"."
-                });
+                const result = verify(personSpec, { name: "dave", height: 187, age: 36 });
+                chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+                chai.expect(result.err).to.have.property("nestedErrors").to.have.length(2);
+                const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+                chai.expect(nestedError0).to.have.property("code", "type.object.extra_attribute");
+                chai.expect(nestedError0).to.have.property("key", "height");
+                const nestedError1 = result.err && result.err.nestedErrors && result.err.nestedErrors[1];
+                chai.expect(nestedError1).to.have.property("code", "type.object.extra_attribute");
+                chai.expect(nestedError1).to.have.property("key", "age");
             });
 
             it("rejects additional attributes in strict objects", () => {
-                const result = verify(strictPerson, { name: "dave", height: 187 });
-                chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                    msg: "Data has attributes that are not part of the schema: \"height\"."
-                });
+                const result = verify(strictPerson, { name: "dave", height: 187, age: 36 });
+                chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+                chai.expect(result.err).to.have.property("nestedErrors").to.have.length(2);
+                const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+                chai.expect(nestedError0).to.have.property("code", "type.object.extra_attribute");
+                chai.expect(nestedError0).to.have.property("key", "height");
+                const nestedError1 = result.err && result.err.nestedErrors && result.err.nestedErrors[1];
+                chai.expect(nestedError1).to.have.property("code", "type.object.extra_attribute");
+                chai.expect(nestedError1).to.have.property("key", "age");
             });
 
             it("accepts additional attributes in non-strict objects", () => {
-                const person = verify(nonStrictPerson, { name: "dave", height: 187 }).value();
+                const person = verify(nonStrictPerson, { name: "dave", height: 187, age: 36 }).value();
                 chai.expect(person.name).to.equal("dave");
             });
 
@@ -367,35 +353,35 @@ describe("type", () => {
 
             it("does not fail early by default", () => {
                 const result = verify(personSpec, {});
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("fails early when global option tells it to do so", () => {
                 const result = verify(personSpec, {}, { failEarly: true });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("fails early when local option tells it to do so", () => {
                 const result = verify(adjust(personSpec, { failEarly: true }), {});
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("does not fail early when global option tells it to do so", () => {
                 const result = verify(personSpec, {}, { failEarly: false });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("does not fail early when local option tells it to do so", () => {
                 const result = verify(adjust(personSpec, { failEarly: false }), {});
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("gives local option on fail early precendence over global option", () => {
                 const result1 = verify(adjust(personSpec, { failEarly: true }), {}, { failEarly: false });
-                chai.expect(result1.err && result1.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result1.err).to.have.property("nestedErrors").that.has.length(1);
 
                 const result2 = verify(adjust(personSpec, { failEarly: false }), {}, { failEarly: true });
-                chai.expect(result2.err && result2.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result2.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
         });
@@ -506,7 +492,7 @@ describe("type", () => {
                 ]
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.not.be.instanceof(ValidationError);
+            chai.expect(result.err).to.be.null;
             const myModel: {
                 name: string,
                 orders: Array<{
@@ -527,17 +513,14 @@ describe("type", () => {
                 orders: "notAnArray"
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.be.instanceof(ValidationError);
-            chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                msg: "Object validation failed.",
-                nested: [
-                    {
-                        key: "orders",
-                        msg: "Evaluation of attribute \"orders\" failed.",
-                        nested: [{ msg: "Not an array." }]
-                    }
-                ]
-            });
+            chai.expect(result.err).to.be.an("object");
+            chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+            chai.expect(result.err).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+            chai.expect(nestedError0).to.have.property("code", "type.object.invalid_attribute");
+            chai.expect(nestedError0).to.have.property("key", "orders");
+            const nestedError1 = nestedError0 && nestedError0.nestedErrors && nestedError0.nestedErrors[0];
+            chai.expect(nestedError1).to.have.property("code", "type.array.not_an_array");
         });
 
         it("rejects invalid array data", () => {
@@ -548,30 +531,20 @@ describe("type", () => {
                 ]
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.be.instanceof(ValidationError);
-            chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                msg: "Object validation failed.",
-                nested: [
-                    {
-                        key: "orders",
-                        msg: "Evaluation of attribute \"orders\" failed.",
-                        nested: [
-                            {
-                                msg: "Array validation failed.",
-                                nested: [
-                                    {
-                                        key: 0,
-                                        msg: "Evaluation of array element at index \"0\" failed.",
-                                        nested: [
-                                            { msg: "Data has attributes that are not part of the schema: \"invalidKey\"."}
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            });
+            chai.expect(result.err).to.be.an("object");
+            chai.expect(result.err).to.have.property("code", "type.object.invalid_attribute_data");
+            chai.expect(result.err).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+            chai.expect(nestedError0).to.have.property("code", "type.object.invalid_attribute");
+            chai.expect(nestedError0).to.have.property("key", "orders");
+            chai.expect(nestedError0).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError1 = nestedError0 && nestedError0.nestedErrors && nestedError0.nestedErrors[0];
+            chai.expect(nestedError1).to.have.property("code", "type.array.invalid_elements");
+            chai.expect(nestedError1).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError2 = nestedError1 && nestedError1.nestedErrors && nestedError1.nestedErrors[0];
+            chai.expect(nestedError2).to.have.property("code", "type.array.invalid_element");
+            chai.expect(nestedError2).to.have.property("key", 0);
+            chai.expect(nestedError2).to.have.property("nestedErrors").to.have.length(1);
         });
 
         describe("failEarly", () => {
@@ -579,35 +552,35 @@ describe("type", () => {
 
             it("does not fail early by default", () => {
                 const result = verify(numberArraySpec, ["x", "y"]);
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("fails early when global option tells it to do so", () => {
                 const result = verify(numberArraySpec, ["x", "y"], { failEarly: true });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("fails early when local option tells it to do so", () => {
                 const result = verify(adjust(numberArraySpec, { failEarly: true }), ["x", "y"]);
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("does not fail early when global option tells it to do so", () => {
                 const result = verify(numberArraySpec, ["x", "y"], { failEarly: false });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("does not fail early when local option tells it to do so", () => {
                 const result = verify(adjust(numberArraySpec, { failEarly: false }), ["x", "y"]);
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("gives local option on fail early precendence over global option", () => {
                 const result1 = verify(adjust(numberArraySpec, { failEarly: true }), ["x", "y"], { failEarly: false });
-                chai.expect(result1.err && result1.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result1.err).to.have.property("nestedErrors").that.has.length(1);
 
                 const result2 = verify(adjust(numberArraySpec, { failEarly: false }), ["x", "y"], { failEarly: true });
-                chai.expect(result2.err && result2.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result2.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
         });
@@ -617,12 +590,12 @@ describe("type", () => {
 
             it("does not skip invalid elements by default", () => {
                 const result = verify(numberArraySpec, [1, "x", "y", 4]);
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("does not skip invalid elements when local option tells it to do so", () => {
                 const result = verify(adjust(numberArraySpec, { skipInvalid: false }), [1, "x", "y", 4]);
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("skips invalid elements when local option tells it to do so", () => {
@@ -687,22 +660,19 @@ describe("type", () => {
                 def: [3]
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.be.instanceof(ValidationError);
-            chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                msg: "Map validation failed.",
-                nested: [
-                    {
-                        key: "NotValid",
-                        msg: "Evaluation of map key \"NotValid\" failed.",
-                        nested: [{ msg: "Regex mismatch." }]
-                    },
-                    {
-                        key: "AlsoNotValid",
-                        msg: "Evaluation of map key \"AlsoNotValid\" failed.",
-                        nested: [{ msg: "Regex mismatch." }]
-                    }
-                ]
-            });
+            chai.expect(result.err).to.be.an("object");
+            chai.expect(result.err).to.have.property("code", "type.map.invalid_data");
+            chai.expect(result.err).to.have.property("nestedErrors").to.have.length(2);
+            const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+            chai.expect(nestedError0).to.have.property("code", "type.map.invalid_key");
+            chai.expect(nestedError0).to.have.property("key", "NotValid");
+            chai.expect(nestedError0).to.have.property("value", "NotValid");
+            chai.expect(nestedError0).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError1 = result.err && result.err.nestedErrors && result.err.nestedErrors[1];
+            chai.expect(nestedError1).to.have.property("code", "type.map.invalid_key");
+            chai.expect(nestedError1).to.have.property("key", "AlsoNotValid");
+            chai.expect(nestedError1).to.have.property("value", "AlsoNotValid");
+            chai.expect(nestedError1).to.have.property("nestedErrors").to.have.length(1);
         });
 
         it("rejects invalid values", () => {
@@ -712,56 +682,53 @@ describe("type", () => {
                 ghi: "alsoNotAnArray"
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.be.instanceof(ValidationError);
-            chai.expect(result.err && result.err.generateReportJson()).to.eql({
-                msg: "Map validation failed.",
-                nested: [
-                    {
-                        key: "abc",
-                        msg: "Evaluation of map value for key \"abc\" failed.",
-                        nested: [{ msg: "Not an array." }]
-                    },
-                    {
-                        key: "ghi",
-                        msg: "Evaluation of map value for key \"ghi\" failed.",
-                        nested: [{ msg: "Not an array." }]
-                    }
-                ]
-            });
+            chai.expect(result.err).to.be.an("object");
+            chai.expect(result.err).to.have.property("code", "type.map.invalid_data");
+            chai.expect(result.err).to.have.property("nestedErrors").to.have.length(2);
+            const nestedError0 = result.err && result.err.nestedErrors && result.err.nestedErrors[0];
+            chai.expect(nestedError0).to.have.property("code", "type.map.invalid_value");
+            chai.expect(nestedError0).to.have.property("key", "abc");
+            chai.expect(nestedError0).to.have.property("value", "notAnArray");
+            chai.expect(nestedError0).to.have.property("nestedErrors").to.have.length(1);
+            const nestedError1 = result.err && result.err.nestedErrors && result.err.nestedErrors[1];
+            chai.expect(nestedError1).to.have.property("code", "type.map.invalid_value");
+            chai.expect(nestedError1).to.have.property("key", "ghi");
+            chai.expect(nestedError1).to.have.property("value", "alsoNotAnArray");
+            chai.expect(nestedError1).to.have.property("nestedErrors").to.have.length(1);
         });
 
         describe("failEarly", () => {
             it("does not fail early by default", () => {
                 const result = verify(testSpec, { NotValidKey: [1], invalidvalue: "x" });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("fails early when global option tells it to do so", () => {
                 const result = verify(testSpec, { NotValidKey: [1], invalidvalue: "x" }, { failEarly: true });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("fails early when local option tells it to do so", () => {
                 const result = verify(adjust(testSpec, { failEarly: true }), { NotValidKey: [1], invalidvalue: "x" });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
             });
 
             it("does not fail early when global option tells it to do so", () => {
                 const result = verify(testSpec, { NotValidKey: [1], invalidvalue: "x" }, { failEarly: false });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("does not fail early when local option tells it to do so", () => {
                 const result = verify(adjust(testSpec, { failEarly: false }), { NotValidKey: [1], invalidvalue: "x" });
-                chai.expect(result.err && result.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
             it("gives local option on fail early precendence over global option", () => {
                 const result1 = verify(adjust(testSpec, { failEarly: true }), { NotValidKey: [1], invalidvalue: "x" }, { failEarly: false });
-                chai.expect(result1.err && result1.err.generateReportJson()).to.have.property("nested").that.has.length(1);
+                chai.expect(result1.err).to.have.property("nestedErrors").that.has.length(1);
 
                 const result2 = verify(adjust(testSpec, { failEarly: false }), { NotValidKey: [1], invalidvalue: "x" }, { failEarly: true });
-                chai.expect(result2.err && result2.err.generateReportJson()).to.have.property("nested").that.has.length(2);
+                chai.expect(result2.err).to.have.property("nestedErrors").that.has.length(2);
             });
 
         });
@@ -772,12 +739,12 @@ describe("type", () => {
 
             it("does not skip invalid keys by default", () => {
                 const result = verify(charToNumberMapSpec, { abc: 123 });
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("does not skip invalid keys when local option tells it to do so", () => {
                 const result = verify(adjust(charToNumberMapSpec, { skipInvalidKeys: false }), { def: 456 });
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("skips invalid keys when local option tells it to do so", () => {
@@ -792,12 +759,12 @@ describe("type", () => {
 
             it("does not skip invalid values by default", () => {
                 const result = verify(stringToNumberMapSpec, { a: "not_a_number" });
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("does not skip invalid values when local option tells it to do so", () => {
                 const result = verify(adjust(stringToNumberMapSpec, { skipInvalidValues: false }), { a: "Not a number" });
-                chai.expect(result.err).to.be.instanceof(ValidationError);
+                chai.expect(result.err).to.be.an("object");
             });
 
             it("skips invalid keys when local option tells it to do so", () => {

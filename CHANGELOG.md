@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.0
+* Change interface of types and constraints  functions to return errors instead of throwing them.
+* Replaced ValidationError class with ValidationFailure interface. Exception thrown by `verify(...).value()` is still of class ValidationError.
+* Added stable error codes and original data value to ValidationFailure interface.
+* Moved error report generators to separate `FormatValidationError` space.
+* Added custom error class to options of `verify`.
+* Nesting of missing attribute error in `Type.object` and `Type.interface`.
+* Customizable error message and error code for `Constraint.string.regex`.
+* Removed deprecated `Type.dateString`.
+* Added static type assertions to the tests.
+* TODO!!!
+
 ## v0.4.1
 * Added automatic resolving of generic type of complex schema models. Hugely improves inspecting value types of verification result variables in TS editors.
 

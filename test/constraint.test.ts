@@ -1,8 +1,14 @@
 import * as chai from "chai";
-import { Type, verify, constrain, Constraint, ValidationError } from "..";
+import { Type, verify, constrain, Constraint } from "..";
 
 
 describe("constraint", () => {
+
+    it("has the correct return type", () => {
+        const int = constrain(Type.number, [Constraint.number.integer]);
+        const int1: number = verify(int, 1).value();
+        chai.expect(int1).to.equal(1);
+    });
 
     describe("generic", () => {
 
@@ -18,8 +24,8 @@ describe("constraint", () => {
             });
 
             it("rejects if value equals none of the specified values", () => {
-                chai.expect(verify(xory, "z").err).to.be.instanceof(ValidationError);
-                chai.expect(verify(oneOr2, 3).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(xory, "z").err).to.have.property("code", "constraint.generic.oneOf.unknown_value");
+                chai.expect(verify(oneOr2, 3).err).to.have.property("code", "constraint.generic.oneOf.unknown_value");
             });
 
         });
@@ -39,10 +45,10 @@ describe("constraint", () => {
             });
 
             it("rejects non-integers", () => {
-                chai.expect(verify(int, 3.5).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(int, -2.4).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(int, NaN).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(int, Infinity).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(int, 3.5).err).to.have.property("code", "constraint.number.integer");
+                chai.expect(verify(int, -2.4).err).to.have.property("code", "constraint.number.integer");
+                chai.expect(verify(int, NaN).err).to.have.property("code", "constraint.number.integer");
+                chai.expect(verify(int, Infinity).err).to.have.property("code", "constraint.number.integer");
             });
 
         });
@@ -58,9 +64,9 @@ describe("constraint", () => {
             });
 
             it("rejects non-integers", () => {
-                chai.expect(verify(finite, NaN).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(finite, Infinity).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(finite, -Infinity).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(finite, NaN).err).to.have.property("code", "constraint.number.finite");
+                chai.expect(verify(finite, Infinity).err).to.have.property("code", "constraint.number.finite");
+                chai.expect(verify(finite, -Infinity).err).to.have.property("code", "constraint.number.finite");
             });
 
         });
@@ -75,11 +81,11 @@ describe("constraint", () => {
             });
 
             it("rejects numbers below or equal to the specified limit", () => {
-                chai.expect(verify(above25, 24).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(above25, 25).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(above25, -1).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(above25, -Infinity).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(above25, NaN).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(above25, 24).err).to.have.property("code", "constraint.number.above");
+                chai.expect(verify(above25, 25).err).to.have.property("code", "constraint.number.above");
+                chai.expect(verify(above25, -1).err).to.have.property("code", "constraint.number.above");
+                chai.expect(verify(above25, -Infinity).err).to.have.property("code", "constraint.number.above");
+                chai.expect(verify(above25, NaN).err).to.have.property("code", "constraint.number.above");
             });
 
         });
@@ -94,11 +100,11 @@ describe("constraint", () => {
             });
 
             it("rejects numbers above or equal to the specified limit", () => {
-                chai.expect(verify(below25, 26).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(below25, 25).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(below25, 1234).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(below25, Infinity).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(below25, NaN).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(below25, 26).err).to.have.property("code", "constraint.number.below");
+                chai.expect(verify(below25, 25).err).to.have.property("code", "constraint.number.below");
+                chai.expect(verify(below25, 1234).err).to.have.property("code", "constraint.number.below");
+                chai.expect(verify(below25, Infinity).err).to.have.property("code", "constraint.number.below");
+                chai.expect(verify(below25, NaN).err).to.have.property("code", "constraint.number.below");
             });
 
         });
@@ -114,10 +120,10 @@ describe("constraint", () => {
             });
 
             it("rejects numbers below the specified limit", () => {
-                chai.expect(verify(atLeast25, 24).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atLeast25, -1).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atLeast25, -Infinity).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atLeast25, NaN).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(atLeast25, 24).err).to.have.property("code", "constraint.number.atLeast");
+                chai.expect(verify(atLeast25, -1).err).to.have.property("code", "constraint.number.atLeast");
+                chai.expect(verify(atLeast25, -Infinity).err).to.have.property("code", "constraint.number.atLeast");
+                chai.expect(verify(atLeast25, NaN).err).to.have.property("code", "constraint.number.atLeast");
             });
 
         });
@@ -133,10 +139,10 @@ describe("constraint", () => {
             });
 
             it("rejects numbers above the specified limit", () => {
-                chai.expect(verify(atMost, 26).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atMost, 1234).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atMost, Infinity).err).to.be.instanceof(ValidationError);
-                chai.expect(verify(atMost, NaN).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(atMost, 26).err).to.have.property("code", "constraint.number.atMost");
+                chai.expect(verify(atMost, 1234).err).to.have.property("code", "constraint.number.atMost");
+                chai.expect(verify(atMost, Infinity).err).to.have.property("code", "constraint.number.atMost");
+                chai.expect(verify(atMost, NaN).err).to.have.property("code", "constraint.number.atMost");
             });
 
         });
@@ -154,7 +160,7 @@ describe("constraint", () => {
             });
 
             it("rejects empty strings", () => {
-                chai.expect(verify(filledString, "").err).to.be.instanceof(ValidationError);
+                chai.expect(verify(filledString, "").err).to.have.property("code", "constraint.string.notEmpty");
             });
 
         });
@@ -170,7 +176,7 @@ describe("constraint", () => {
                 });
 
                 it("rejects strings shorter than the specified length", () => {
-                    chai.expect(verify(minLength3, "ab").err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(minLength3, "ab").err).to.have.property("code", "constraint.string.length.too_short");
                 });
 
             });
@@ -184,7 +190,7 @@ describe("constraint", () => {
                 });
 
                 it("rejects strings longer than the specified length", () => {
-                    chai.expect(verify(maxLength5, "abcdef").err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(maxLength5, "abcdef").err).to.have.property("code", "constraint.string.length.too_long");
                 });
 
             });
@@ -199,8 +205,8 @@ describe("constraint", () => {
                 });
 
                 it("rejects strings with a length outside the specified range", () => {
-                    chai.expect(verify(lengthInRange3and5, "ab").err).to.be.instanceof(ValidationError);
-                    chai.expect(verify(lengthInRange3and5, "abcdef").err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(lengthInRange3and5, "ab").err).to.have.property("code", "constraint.string.length.too_short");
+                    chai.expect(verify(lengthInRange3and5, "abcdef").err).to.have.property("code", "constraint.string.length.too_long");
                 });
 
             });
@@ -215,7 +221,15 @@ describe("constraint", () => {
             });
 
             it("rejects strings that do not match the specified regex", () => {
-                chai.expect(verify(onlyA, "ABBA").err).to.be.instanceof(ValidationError);
+                chai.expect(verify(onlyA, "ABBA").err).to.have.property("code", "constraint.string.regex");
+            });
+
+            it("allows to specify a custom error message and error code", () => {
+                const custom = { errorMessage: "Not a uuid.", errorCode: "constraint.string.uuid" };
+                const customUuid = constrain(Type.string, [Constraint.string.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i, custom)]);
+                const err = verify(customUuid, "definitely_not_a_uuid!").err;
+                chai.expect(err).to.have.property("code", custom.errorCode);
+                chai.expect(err).to.have.property("message", custom.errorMessage);
             });
 
         });
@@ -231,7 +245,7 @@ describe("constraint", () => {
             });
 
             it("rejects strings that do not start with the specified prefix", () => {
-                chai.expect(verify(startsWithThis, "That").err).to.be.instanceof(ValidationError);
+                chai.expect(verify(startsWithThis, "That").err).to.have.property("code", "constraint.string.startsWith");
             });
 
         });
@@ -246,7 +260,7 @@ describe("constraint", () => {
             });
 
             it("rejects strings that do not end with the specified suffix", () => {
-                chai.expect(verify(endsWithDude, "dude! No!").err).to.be.instanceof(ValidationError);
+                chai.expect(verify(endsWithDude, "dude! No!").err).to.have.property("code", "constraint.string.endsWith");
             });
 
         });
@@ -266,8 +280,8 @@ describe("constraint", () => {
                 });
 
                 it("rejects maps with less keys than the specified size", () => {
-                    chai.expect(verify(atLeast2, { a: 1 }).err).to.be.instanceof(ValidationError);
-                    chai.expect(verify(atLeast2, {}).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(atLeast2, { a: 1 }).err).to.have.property("code", "constraint.map.size.too_small");
+                    chai.expect(verify(atLeast2, {}).err).to.have.property("code", "constraint.map.size.too_small");
                 });
 
             });
@@ -281,7 +295,7 @@ describe("constraint", () => {
                 });
 
                 it("rejects maps with more keys than the specified size", () => {
-                    chai.expect(verify(atMost4, { a: 1, b: 2, c: 3, d: 4, e: 5 }).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(atMost4, { a: 1, b: 2, c: 3, d: 4, e: 5 }).err).to.have.property("code", "constraint.map.size.too_large");
                 });
 
             });
@@ -295,8 +309,8 @@ describe("constraint", () => {
                 });
 
                 it("rejects maps with a length outside the specified range", () => {
-                    chai.expect(verify(sizeOf2to4, { a: 1 }).err).to.be.instanceof(ValidationError);
-                    chai.expect(verify(sizeOf2to4, { a: 1, b: 2, c: 3, d: 4, e: 5 }).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(sizeOf2to4, { a: 1 }).err).to.have.property("code", "constraint.map.size.too_small");
+                    chai.expect(verify(sizeOf2to4, { a: 1, b: 2, c: 3, d: 4, e: 5 }).err).to.have.property("code", "constraint.map.size.too_large");
                 });
 
             });
@@ -318,7 +332,7 @@ describe("constraint", () => {
                 });
 
                 it("rejects arrays shorter than the specified length", () => {
-                    chai.expect(verify(minLength3, [1, 2]).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(minLength3, [1, 2]).err).to.have.property("code", "constraint.array.length.too_short");
                 });
 
             });
@@ -332,7 +346,7 @@ describe("constraint", () => {
                 });
 
                 it("rejects arrays longer than the specified length", () => {
-                    chai.expect(verify(maxLength5, [1, 2, 3, 4, 5, 6]).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(maxLength5, [1, 2, 3, 4, 5, 6]).err).to.have.property("code", "constraint.array.length.too_long");
                 });
 
             });
@@ -347,8 +361,8 @@ describe("constraint", () => {
                 });
 
                 it("rejects arrays with a length outside the specified range", () => {
-                    chai.expect(verify(lengthInRange3and5, [1, 2]).err).to.be.instanceof(ValidationError);
-                    chai.expect(verify(lengthInRange3and5, [1, 2, 3, 4, 5, 6]).err).to.be.instanceof(ValidationError);
+                    chai.expect(verify(lengthInRange3and5, [1, 2]).err).to.have.property("code", "constraint.array.length.too_short");
+                    chai.expect(verify(lengthInRange3and5, [1, 2, 3, 4, 5, 6]).err).to.have.property("code", "constraint.array.length.too_long");
                 });
 
             });
@@ -364,7 +378,7 @@ describe("constraint", () => {
             });
 
             it("rejects arrays that does not include the specified value", () => {
-                chai.expect(verify(includes999, [1, 2, 3]).err).to.be.instanceof(ValidationError);
+                chai.expect(verify(includes999, [1, 2, 3]).err).to.have.property("code", "constraint.array.includes");
             });
 
         });

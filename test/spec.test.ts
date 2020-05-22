@@ -1,5 +1,9 @@
 import * as chai from "chai";
-import { Type, verify, optional, constrain, adjust, either, alias, definitionOf, extractAliases, Constraint, ValidationError } from "..";
+import {
+    Type, verify, optional, constrain, adjust, either, alias, definitionOf,
+    extractAliases, Constraint, FormatValidationError
+} from "..";
+import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed } from "./static-assert";
 
 
 describe("spec", () => {
@@ -37,15 +41,9 @@ describe("spec", () => {
                 age: 36
             };
             const err = verify(testSpec, data).err;
-            chai.expect(err && err.generateReportJson()).to.eql({
-                msg: "Object validation failed.",
-                nested: [
-                    {
-                        key: "name",
-                        msg: "Attribute not present: \"name\"."
-                    }
-                ]
-            });
+            chai.expect(err && err.code).to.equal("type.object.invalid_attribute_data");
+            chai.expect(err && err.nestedErrors && err.nestedErrors[0].key).to.equal("name");
+            chai.expect(err && err.nestedErrors && err.nestedErrors[0].code).to.equal("type.object.missing_attribute");
         });
 
         it("rejects the undefined value in the data for an optional attribute", () => {
@@ -54,16 +52,9 @@ describe("spec", () => {
                 age: undefined
             };
             const err = verify(testSpec, data).err;
-            chai.expect(err && err.generateReportJson()).to.eql({
-                msg: "Object validation failed.",
-                nested: [
-                    {
-                        key: "age",
-                        msg: "Evaluation of attribute \"age\" failed.",
-                        nested: [{ msg: "Not a number." }]
-                    }
-                ]
-            });
+            chai.expect(err && err.code).to.equal("type.object.invalid_attribute_data");
+            chai.expect(err && err.nestedErrors && err.nestedErrors[0].key).to.equal("age");
+            chai.expect(err && err.nestedErrors && err.nestedErrors[0].code).to.equal("type.object.invalid_attribute");
         });
 
         it("uses the default value if the data does not contain the optional attribute", () => {
@@ -101,10 +92,11 @@ describe("spec", () => {
         const { integer, above } = Constraint.number;
 
         const integerAbove25 = constrain(Type.number, [integer, above(25)]);
+        staticAssertIsNotAny(integerAbove25);
 
         it("checks the constraints of a spec", () => {
             const data = 36.5;
-            chai.expect(verify(integerAbove25, data).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(integerAbove25, data).err).to.be.an("object");
         });
 
         it("is possible to make custom constraints", () => {
@@ -115,15 +107,17 @@ describe("spec", () => {
                 },
                 eval: (value: boolean[]) => {
                     const count = value.reduce((aggr, elem) => aggr + (elem ? 1 : 0), 0);
-                    if (count !== 1) {
-                        throw new ValidationError("Not exactly one true.");
-                    }
+                    return { err: count !== 1 ? {
+                        code: "test.not_exactly_one_true",
+                        value,
+                        message: "Not exactly one true."
+                    } : null };
                 }
             };
             const booleanArrayWithOneTrue = constrain(booleanArray, [exactlyOneTrue]);
             chai.expect(verify(booleanArrayWithOneTrue, [false, true, false, false]).err).to.equal(null);
-            chai.expect(verify(booleanArrayWithOneTrue, [false, false, false]).err).to.be.instanceof(ValidationError);
-            chai.expect(verify(booleanArrayWithOneTrue, [true, false, true]).err).to.be.instanceof(ValidationError);
+            chai.expect(verify(booleanArrayWithOneTrue, [false, false, false]).err).to.be.an("object");
+            chai.expect(verify(booleanArrayWithOneTrue, [true, false, true]).err).to.be.an("object");
         });
 
         it("checks that all constraints are met", () => {
@@ -133,9 +127,11 @@ describe("spec", () => {
             ]);
 
             const model1 = verify(partiallyOverlapping, "two").value();
+            staticAssertIsNotAny(model1);
+            staticAssertUndefinedNotAllowed(model1);
             chai.expect(model1).to.equal("two");
 
-            chai.expect(verify(partiallyOverlapping, "four").err).to.be.instanceof(ValidationError);
+            chai.expect(verify(partiallyOverlapping, "four").err).to.be.an("object");
         });
 
         // TODO: constrain with different constraint types (e.g. boolean[] and number[]).
@@ -215,9 +211,7 @@ describe("spec", () => {
         });
 
         it("rejects values not matching one of the specs", () => {
-            chai.expect(verify(stringOrBool, 12345).err).to.be.instanceof(
-                ValidationError
-            ).to.have.property("nestedErrors").to.have.length(2);
+            chai.expect(verify(stringOrBool, 12345).err).to.be.an("object").that.has.property("nestedErrors").to.have.length(2);
         });
 
         it("accepts either value of upto 9 specs", () => {
@@ -280,8 +274,8 @@ describe("spec", () => {
             it("reports correctly on flat types", () => {
                 const numberSpec = Type.number;
                 const result = verify(numberSpec, "not_a_number");
-                chai.expect(result.err).to.be.instanceof(ValidationError);
-                const report = result.err && result.err.generateReportJson();
+                chai.expect(result.err).to.be.an("object");
+                const report = result.err && FormatValidationError.generateReportJson(result.err);
                 chai.expect(report).to.eql({
                     msg: "Not a number." // TODO: Type identifiers, with coupled messages?
                 });
@@ -290,7 +284,7 @@ describe("spec", () => {
             it("reports correctly on constraints", () => {
                 const positiveNumberSpec = constrain(Type.number, [Constraint.number.above(0)]);
                 const result = verify(positiveNumberSpec, -1);
-                const report = result.err && result.err.generateReportJson();
+                const report = result.err && FormatValidationError.generateReportJson(result.err);
                 chai.expect(report).to.eql({
                     msg: "Not above 0." // TODO: Type identifiers, with coupled TEMPLATED messages?
                 });
@@ -311,9 +305,9 @@ describe("spec", () => {
                         city: "Outoftown"
                     }
                 });
-                const report = result.err && result.err.generateReportJson();
+                const report = result.err && FormatValidationError.generateReportJson(result.err);
                 chai.expect(report).to.eql({
-                    msg: "Object validation failed.",
+                    msg: "Invalid attribute data.",
                     nested: [
                         {
                             key: "name",
