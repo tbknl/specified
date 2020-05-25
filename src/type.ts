@@ -22,11 +22,13 @@ interface Schema {
     [attr: string]: OptionalSpec | NonOptionalSpec;
 }
 
-type Model<S extends Schema> = {
+type ResolveGeneric<T> = { [K in keyof T]: T[K] } & {};
+
+type Model<S extends Schema> = ResolveGeneric<{
     [P in keyof NonOptSchema<S>]: S[P] extends NonOptionalSpec ? ReturnType<S[P]["eval"]> : never;
 } & {
     [P in keyof OptSchema<S>]?: S[P] extends OptionalSpec ? ReturnType<S[P]["eval"]> : never;
-};
+}>;
 
 const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean) => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
     const settings = { strict: defaultStrict, failEarly: false, ...options.global, ...options.local };

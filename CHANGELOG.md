@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.4.1
+* Added automatic resolving of generic type of complex schema models. Hugely improves inspecting value types of verification result variables in TS editors.
+
 ## v0.4.0
 * Added 'booleanKey' type.
 * Added 'interface' type. Same behavior as object type, except it is non-strict by default.
