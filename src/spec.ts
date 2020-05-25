@@ -120,7 +120,7 @@ export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constra
 };
 
 
-export const optional = <S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }) => {
+export const optional = <S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true } => {
     const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
     return {
         definition: {

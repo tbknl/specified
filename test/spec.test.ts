@@ -22,6 +22,8 @@ describe("spec", () => {
                 gender: "male"
             };
             const result = verify(testSpec, data).value();
+            staticAssertIsNotAny(result.age);
+            staticAssertIsNotAny(result.gender);
             chai.expect(result).to.have.property("name").that.equals("dave");
             chai.expect(result).to.have.property("age").that.equals(36);
             chai.expect(result).to.have.property("gender").that.equals("male");
