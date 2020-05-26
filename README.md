@@ -52,6 +52,7 @@ const myProduct = verify(productSpec, data).value();
 	 - `object(schema)`: Accepts object that follow the specified schema (see below). An object spec is strict by default: it does not except attributes that are not part of the schema.
 	 - `interface(schema)`: Accepts object that follow the specified schema (see below). an interface spec is, in contrast to the object spec, non-strict by default.
 	 - `map(keySpec, valueSpec)`: Accepts objects of which all keys are according to `keySpec` and all values according to `valueSpec`.
+     - `tuple(spec1, spec2, ...)`: Accepts tuples (an array with fixed length) of which each element value is according to the spec at the same index.
 	 - `instance(classCtor)`: Accepts instances of the specified class.
 	 - `numeric`: Accepts anything that is convertible to a number.
 	 - `booleanKey({ truthy: string[], falsy?: string[] })`: Interprets strings as boolean values.

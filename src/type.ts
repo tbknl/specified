@@ -29,6 +29,9 @@ type Model<S extends Schema> = ResolveGeneric<{
     [P in keyof OptSchema<S>]?: S[P] extends OptionalSpec ? VerifiedType<S[P]> : never;
 }>;
 
+type SpecType<S> = S extends Spec<EvalResult<any>, any> ? VerifiedType<S> : never;
+type TupleSpecTypes<T> = { [P in keyof T]: SpecType<T[P]> };
+
 const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeName: "object" | "interface") => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
     const settings = { strict: defaultStrict, failEarly: false, ...options.global, ...options.local };
     if (typeof data !== "object" || data === null || data instanceof Array) {
@@ -248,6 +251,49 @@ export const Type = {
                     return { err: { code: "type.map.invalid_data", value: data, message: "Invalid map data.", nestedErrors } };
                 }
                 return { err: null, value: result };
+            }
+        };
+    },
+    tuple: <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple) => {
+        // TODO: Add tuple to readme doc.
+        return {
+            definition: {
+                type: "tuple",
+                nested: specs.reduce((n, spec, i) => {
+                    n[i] = spec.definition;
+                    return n;
+                }, {})
+            },
+            eval: (data: unknown, options: { local?: { failEarly?: boolean }, global: { failEarly?: boolean } }) => {
+                const settings = { failEarly: false, ...options.global, ...options.local };
+                if (!(data instanceof Array)) {
+                    return { err: { code: "type.tuple.not_a_tuple", value: data, message: "Not an tuple." } };
+                }
+                if (data.length !== specs.length) {
+                    return { err: { code: "type.tuple.incorrect_length", value: data, message: `Data does not have correct tuple length ${specs.length}.` } };
+                }
+                const values = [] as unknown as TupleSpecTypes<SpecsTuple>;
+                const nestedErrors: ValidationFailure[] = [];
+                for (let i = 0; i < data.length && (!settings.failEarly || !nestedErrors.length); ++i) {
+                    const elementValue = data[i];
+                    const elementResult = specs[i].eval(elementValue, { global: options.global });
+                    if (elementResult.err) {
+                        nestedErrors.push({
+                            code: "type.tuple.invalid_element",
+                            value: elementValue,
+                            message: `Evaluation of tuple element at index "${i}" failed.`,
+                            key: i,
+                            nestedErrors: [elementResult.err]
+                        });
+                    }
+                    else {
+                        values.push(elementResult.value);
+                    }
+                }
+                if (nestedErrors.length) {
+                    return { err: { code: "type.tuple.invalid_elements", value: data, message: "Tuple validation failed.", nestedErrors } };
+                }
+                return { err: null, value: values };
             }
         };
     },

@@ -1,5 +1,6 @@
 import * as chai from "chai";
 import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, Constraint } from "..";
+import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsArray } from "./static-assert";
 
 
 describe("type", () => {
@@ -814,5 +815,100 @@ describe("type", () => {
         });
 
     });
+
+    describe("tuple", () => {
+        const integer = constrain(Type.number, [Constraint.number.integer]);
+        const tupleSpec = Type.tuple(Type.string, integer, Type.boolean);
+
+        const resultValue = verify(tupleSpec, ["x", 1, true]).value();
+        staticAssertIsNotAny(resultValue);
+        staticAssertIsArray(resultValue);
+        staticAssertUndefinedNotAllowed(resultValue);
+        staticAssertUndefinedNotAllowed(resultValue[0]);
+
+        it("accepts valid tuple data", () => {
+            const data = ["abc", 123, true];
+            const resultValue: [string, number, boolean] = verify(tupleSpec, data).value();
+            chai.expect(resultValue).to.be.eql(data);
+        });
+
+        it("rejects non-tuple data", () => {
+            chai.expect(verify(tupleSpec, "not_a_tuple").err).to.have.property("code", "type.tuple.not_a_tuple");
+        });
+
+        it("rejects tuples with incorrect length", () => {
+            chai.expect(verify(tupleSpec, ["one", 2]).err).to.have.property("code", "type.tuple.incorrect_length");
+            chai.expect(verify(tupleSpec, ["one", 2, true, "four"]).err).to.have.property("code", "type.tuple.incorrect_length");
+        });
+
+        it("rejects tuples with invalid data", () => {
+            const err0 = verify(tupleSpec, ["one", 3.141592, "not_a_boolean"]).err;
+            chai.expect(err0).to.have.property("code", "type.tuple.invalid_elements");
+            chai.expect(err0).to.have.property("nestedErrors").that.has.length(2);
+            const err1 = err0 && err0.nestedErrors && err0.nestedErrors[0];
+            chai.expect(err1).to.have.property("code", "type.tuple.invalid_element");
+            chai.expect(err1).to.have.property("key", 1);
+            chai.expect(err1).to.have.property("nestedErrors").that.has.length(1);
+            const err2 = err0 && err0.nestedErrors && err0.nestedErrors[1];
+            chai.expect(err2).to.have.property("code", "type.tuple.invalid_element");
+            chai.expect(err2).to.have.property("key", 2);
+            chai.expect(err2).to.have.property("nestedErrors").that.has.length(1);
+        });
+
+        describe("failEarly", () => {
+            it("does not fail early by default", () => {
+                const result = verify(tupleSpec, ["xyz", null, null]);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
+            });
+
+            it("fails early when global option tells it to do so", () => {
+                const result = verify(tupleSpec, ["xyz", null, null], { failEarly: true });
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
+            });
+
+            it("fails early when local option tells it to do so", () => {
+                const result = verify(adjust(tupleSpec, { failEarly: true }), ["xyz", null, null]);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(1);
+            });
+
+            it("does not fail early when global option tells it to do so", () => {
+                const result = verify(tupleSpec, ["xyz", null, null], { failEarly: false });
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
+            });
+
+            it("does not fail early when local option tells it to do so", () => {
+                const result = verify(adjust(tupleSpec, { failEarly: false }), ["xyz", null, null]);
+                chai.expect(result.err).to.have.property("nestedErrors").that.has.length(2);
+            });
+
+            it("gives local option on fail early precendence over global option", () => {
+                const result1 = verify(adjust(tupleSpec, { failEarly: true }), ["xyz", null, null], { failEarly: false });
+                chai.expect(result1.err).to.have.property("nestedErrors").that.has.length(1);
+
+                const result2 = verify(adjust(tupleSpec, { failEarly: false }), ["xyz", null, null], { failEarly: true });
+                chai.expect(result2.err).to.have.property("nestedErrors").that.has.length(2);
+            });
+
+        });
+
+        describe("definition", () => {
+            const tupleSpec = Type.tuple(Type.string, Type.number, Type.boolean);
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(tupleSpec).type).to.equal("tuple");
+            });
+
+            it("has the correct nested definitions", () => {
+                chai.expect(definitionOf(tupleSpec).nested).to.eql({
+                    0: definitionOf(Type.string),
+                    1: definitionOf(Type.number),
+                    2: definitionOf(Type.boolean)
+                });
+            });
+
+        });
+
+    });
+
 });
 
