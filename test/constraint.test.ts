@@ -383,6 +383,29 @@ describe("constraint", () => {
 
         });
 
+        describe("unique", () => {
+            const uniqueNumbers = constrain(Type.array(Type.number), [Constraint.array.unique()]);
+
+            it("accepts arrays with unique elements", () => {
+                chai.expect(verify(uniqueNumbers, []).err).to.be.null;
+                chai.expect(verify(uniqueNumbers, [123]).err).to.be.null;
+                chai.expect(verify(uniqueNumbers, [9, 5, 1, 4, 8]).err).to.be.null;
+            });
+            
+            it("rejects arrays with duplicate elements", () => {
+                chai.expect(verify(uniqueNumbers, [9, 777, 1, 4, 777]).err).to.have.property("code", "constraint.array.unique");
+            });
+            
+            it("allows for providing a custom equality function", () => {
+                const objectsWithUniqueX = constrain(Type.array(Type.interface({ x: Type.number })), [Constraint.array.unique(
+                    (a: { x: number }, b: { x: number }) => a.x === b.x
+                )]);
+                chai.expect(verify(objectsWithUniqueX, [{ x: 1 }, { x: 2 }]).err).to.be.null;
+                chai.expect(verify(objectsWithUniqueX, [{ x: 777 }, { x: 3 }, { x: 777, y: "ignored" }]).err).to.have.property("code", "constraint.array.unique");
+            });
+            
+        });
+
     });
 
 });

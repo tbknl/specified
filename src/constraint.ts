@@ -252,6 +252,28 @@ export const Constraint = {
                     } : null };
                 }
             };
+        },
+        unique: <U, T extends U>(equalsFunc: (a: U, b: U) => boolean = (a: U, b: U) => a === b) => {
+            return {
+                definition: {
+                    name: "unique"
+                },
+                eval: (value: T[]) => {
+                    // TODO: Add warning note to documentation that this function does 1/2 * (N^2 - N) comparisons.
+                    for (let i = 0; i < value.length; i++) {
+                        for (let j = i + 1; j < value.length; j++) {
+                            if (equalsFunc(value[i], value[j])) {
+                                return { err: {
+                                    code: "constraint.array.unique",
+                                    value,
+                                    message: `Array has duplicate elements at index ${i} and ${j}.`
+                                } };
+                            }
+                        }
+                    }
+                    return { err: null };
+                }
+            };
         }
     }
 };
