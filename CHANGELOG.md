@@ -10,6 +10,7 @@
 * Customizable error message and error code for `Constraint.string.regex`.
 * Removed deprecated `Type.dateString`.
 * Added static type assertions to the tests.
+* Added new `Type.tuple(...)` type.
 * TODO!!!
 
 ## v0.4.1
