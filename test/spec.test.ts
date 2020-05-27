@@ -204,6 +204,8 @@ describe("spec", () => {
 
         it("accepts either value of 2 specs", () => {
             const myModel1 = verify(stringOrBool, "a string").value();
+            staticAssertIsNotAny(myModel1);
+            staticAssertUndefinedNotAllowed(myModel1);
             chai.expect(typeof myModel1).to.equal("string");
             chai.expect(myModel1).to.equal("a string");
 
