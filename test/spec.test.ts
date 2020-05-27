@@ -15,6 +15,18 @@ describe("spec", () => {
             gender: optional(Type.string, { defaultValue: "unknown" })
         });
 
+        it("produces the correct result type", () => {
+            const value = verify(testSpec, { name: "test1" }).value();
+            staticAssertIsNotAny(value.name);
+            staticAssertIsNotAny(value.age);
+            staticAssertIsNotAny(value.gender);
+            staticAssertUndefinedNotAllowed(value);
+            staticAssertUndefinedNotAllowed(value.name);
+            const typedValue: { name: string, age?: number, gender?: string } = value;
+            // TODO!!! gender should not be optional in typedValue's type, because it has a defaultValue!
+            chai.expect(typedValue).to.have.property("name").that.equals("test1");
+        });
+
         it("accepts data in an optional attribute", () => {
             const data = {
                 name: "dave",
@@ -22,8 +34,6 @@ describe("spec", () => {
                 gender: "male"
             };
             const result = verify(testSpec, data).value();
-            staticAssertIsNotAny(result.age);
-            staticAssertIsNotAny(result.gender);
             chai.expect(result).to.have.property("name").that.equals("dave");
             chai.expect(result).to.have.property("age").that.equals(36);
             chai.expect(result).to.have.property("gender").that.equals("male");
