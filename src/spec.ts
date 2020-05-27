@@ -186,85 +186,26 @@ export const extractAliases = (def: SpecDefinition) => {
 };
 
 
-export const either = <
-    R1 extends EvalResult<any>, 
-    R2 extends EvalResult<any>, 
-    R3 extends EvalResult<any> = never,
-    R4 extends EvalResult<any> = never,
-    R5 extends EvalResult<any> = never,
-    R6 extends EvalResult<any> = never,
-    R7 extends EvalResult<any> = never,
-    R8 extends EvalResult<any> = never,
-    R9 extends EvalResult<any> = never
-    >(
-        spec1: Spec<R1, {}>,
-        spec2: Spec<R2, {}>,
-        spec3?: Spec<R3, {}>,
-        spec4?: Spec<R4, {}>,
-        spec5?: Spec<R5, {}>,
-        spec6?: Spec<R6, {}>,
-        spec7?: Spec<R7, {}>,
-        spec8?: Spec<R8, {}>,
-        spec9?: Spec<R9, {}>
-    ) => {
-    const nested = {
-        1: spec1.definition,
-        2: spec2.definition
-    };
-    if (spec3) { nested[3] = spec3.definition; }
-    if (spec4) { nested[4] = spec4.definition; }
-    if (spec5) { nested[5] = spec5.definition; }
-    if (spec6) { nested[6] = spec6.definition; }
-    if (spec7) { nested[7] = spec7.definition; }
-    if (spec8) { nested[8] = spec8.definition; }
-    if (spec9) { nested[9] = spec9.definition; }
+type SpecEvalResultType<S> = S extends Spec<EvalResult<any>, any> ? EvalResultOf<S> : never;
+type TupleSpecEvalResultTypes<T> = { [P in keyof T]: SpecEvalResultType<T[P]> };
+type TupleTypeUnion<TT> = TT extends Array<infer U> ? U : never;
+
+export const either = <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple) => {
+    const nested = specs.reduce((n, spec, index) => {
+        n[index + 1] = spec.definition;
+        return n;
+    }, {});
     return {
         definition: {
             type: "either",
             nested
         },
-        eval: (value: unknown, options: SpecOptions): R1| R2| R3| R4| R5| R6| R7| R8| R9 | EvalResultFailure => {
+        eval: (value: unknown, options: SpecOptions): TupleTypeUnion<TupleSpecEvalResultTypes<SpecsTuple>> | EvalResultFailure => {
             const validationErrors: ValidationFailure[] = [];
 
-            const resultSpec1 = spec1.eval(value, { global: options.global });
-            if (resultSpec1.err) { validationErrors.push(resultSpec1.err); } else { return resultSpec1; }
-
-            const resultSpec2 = spec2.eval(value, { global: options.global });
-            if (resultSpec2.err) { validationErrors.push(resultSpec2.err); } else { return resultSpec2; }
-
-            if (spec3) {
-                const resultSpec3 = spec3.eval(value, { global: options.global });
-                if (resultSpec3.err) { validationErrors.push(resultSpec3.err); } else { return resultSpec3; }
-            }
-
-            if (spec4) {
-                const resultSpec4 = spec4.eval(value, { global: options.global });
-                if (resultSpec4.err) { validationErrors.push(resultSpec4.err); } else { return resultSpec4; }
-            }
-
-            if (spec5) {
-                const resultSpec5 = spec5.eval(value, { global: options.global });
-                if (resultSpec5.err) { validationErrors.push(resultSpec5.err); } else { return resultSpec5; }
-            }
-
-            if (spec6) {
-                const resultSpec6 = spec6.eval(value, { global: options.global });
-                if (resultSpec6.err) { validationErrors.push(resultSpec6.err); } else { return resultSpec6; }
-            }
-
-            if (spec7) {
-                const resultSpec7 = spec7.eval(value, { global: options.global });
-                if (resultSpec7.err) { validationErrors.push(resultSpec7.err); } else { return resultSpec7; }
-            }
-
-            if (spec8) {
-                const resultSpec8 = spec8.eval(value, { global: options.global });
-                if (resultSpec8.err) { validationErrors.push(resultSpec8.err); } else { return resultSpec8; }
-            }
-
-            if (spec9) {
-                const resultSpec9 = spec9.eval(value, { global: options.global });
-                if (resultSpec9.err) { validationErrors.push(resultSpec9.err); } else { return resultSpec9; }
+            for (const spec of specs) {
+                const result = spec.eval(value, { global: options.global });
+                if (result.err) { validationErrors.push(result.err); } else { return result; }
             }
 
             return { err: {
