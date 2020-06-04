@@ -390,6 +390,7 @@ describe("spec", () => {
             chai.expect(result.aliases).to.eql({
                 [objectAliasName]: {
                     alias: objectAliasName,
+                    descriptions: {},
                     type: "object",
                     nested: {
                         a: { alias: mapAliasName },

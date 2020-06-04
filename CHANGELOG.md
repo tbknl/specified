@@ -12,6 +12,7 @@
 * Added static type assertions to the tests.
 * Added new `Type.tuple(...)` type.
 * Rewrite of `either` to support any amount of specs, instead of the maximum of 9 from before.
+* Added schema attribute descriptions to `Type.object` and `Type.interface` definitions.
 * TODO!!!
 
 ## v0.4.1
