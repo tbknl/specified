@@ -422,6 +422,19 @@ describe("type", () => {
                 });
             });
 
+            it("includes the optional attribute descriptions from the schema", () => {
+                const schemaWithDescriptions = {
+                    attrA: { ...Type.string, description: "This describes attribute A."},
+                    attrB: Type.number,
+                    attrC: { ...Type.boolean, description: "This describes attribute C."},
+                };
+                const objSpecWithDescriptions = Type.object(schemaWithDescriptions);
+                chai.expect(definitionOf(objSpecWithDescriptions).descriptions).to.eql({
+                    attrA: schemaWithDescriptions.attrA.description,
+                    attrC: schemaWithDescriptions.attrC.description
+                });
+            });
+
         });
 
     });

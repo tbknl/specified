@@ -18,7 +18,7 @@ type NonOptSchema<S> = Pick<S, NonOptionalAttributes<S>[keyof S]>;
 type OptSchema<S> = Pick<S, OptionalAttributes<S>[keyof S]>;
 
 interface Schema {
-    [attr: string]: OptionalSpec | NonOptionalSpec;
+    [attr: string]: (OptionalSpec | NonOptionalSpec) & { description?: string }; // TODO! Tests for description!
 }
 
 type ResolveGeneric<T> = { [K in keyof T]: T[K] } & {};
@@ -31,6 +31,20 @@ type Model<S extends Schema> = ResolveGeneric<{
 
 type SpecType<S> = S extends Spec<EvalResult<any>, any> ? VerifiedType<S> : never;
 type TupleSpecTypes<T> = { [P in keyof T]: SpecType<T[P]> };
+
+const objectDefinition = <S extends Schema>(schema: S, typeName: "object" | "interface") => ({
+    type: typeName,
+    nested: Object.keys(schema).reduce((o, a) => {
+        o[a] = schema[a].definition;
+        return o;
+    }, {}),
+    descriptions: Object.keys(schema).reduce((d, a) => {
+        if (schema[a].hasOwnProperty("description")) {
+            d[a] = schema[a].description;
+        }
+        return d;
+    }, {})
+});
 
 const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeName: "object" | "interface") => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
     const settings = { strict: defaultStrict, failEarly: false, ...options.global, ...options.local };
@@ -187,25 +201,13 @@ export const Type = {
     }),
     object: <S extends Schema>(schema: S) => {
         return {
-            definition: {
-                type: "object",
-                nested: Object.keys(schema).reduce((o, a) => {
-                    o[a] = schema[a].definition;
-                    return o;
-                }, {})
-            },
+            definition: objectDefinition(schema, "object"),
             eval: objectEval(schema, true, "object")
         };
     },
     interface: <S extends Schema>(schema: S) => {
         return {
-            definition: {
-                type: "interface",
-                nested: Object.keys(schema).reduce((o, a) => {
-                    o[a] = schema[a].definition;
-                    return o;
-                }, {})
-            },
+            definition: objectDefinition(schema, "interface"),
             eval: objectEval(schema, false, "interface")
         };
     },

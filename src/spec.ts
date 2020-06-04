@@ -36,6 +36,7 @@ export interface SpecDefinition {
     readonly adjustments?: object;
     readonly flags?: string[];
     readonly defaultValue?: unknown;
+    readonly descriptions?: { [attr: string]: string };
 }
 
 type EvalResultFailure = { err: ValidationFailure; };
