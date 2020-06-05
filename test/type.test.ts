@@ -151,6 +151,37 @@ describe("type", () => {
 
     });
 
+    describe("literalValue", () => {
+        const literalValueSpec = Type.literalValue(123 as 123, "abc" as "abc", true as true);
+        const value = verify(literalValueSpec, "abc").value();
+        staticAssertIsNotAny(value);
+        staticAssertUndefinedNotAllowed(value);
+
+        it("accepts the single literal value", () => {
+            chai.expect(verify(Type.literalValue(123 as 123), 123).value()).to.equal(123);
+        });
+
+        it("accepts multiple literal values", () => {
+            const multiliteral = Type.literalValue(123 as 123, "abc" as "abc");
+            chai.expect(verify(multiliteral, 123).value()).to.equal(123);
+            chai.expect(verify(multiliteral, "abc").value()).to.equal("abc");
+        });
+
+        it("rejects values not in the literal list", () => {
+            const multiliteral = Type.literalValue(123 as 123, "abc" as "abc", true as true);
+            chai.expect(verify(multiliteral, 456).err).to.have.property("code", "type.literalValue.incorrect_literal_value");
+            chai.expect(verify(multiliteral, false).err).to.have.property("code", "type.literalValue.incorrect_literal_value");
+        });
+
+        it("has the correct definition type", () => {
+            chai.expect(definitionOf(Type.literalValue(123 as 123, "abc" as "abc", true as true))).to.eql({
+                type: "literalValue",
+                settings: { values: [123, "abc", true] }
+            });
+        });
+
+    });
+
     describe("instance", () => {
         class MyClass {}
         const myClassSpec = Type.instance(MyClass);
