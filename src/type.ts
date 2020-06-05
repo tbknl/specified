@@ -163,6 +163,20 @@ export const Type = {
             return { err: null, value: value as keyof D };
         }
     }),
+    literalValue: <V extends any[]>(...values: V) => ({
+        definition: {
+            type: "literalValue",
+            settings: { values }
+        },
+        eval: (value: unknown) => {
+            for (const v of values) {
+                if (value === v) {
+                    return { err: null, value: value as V[number] };
+                }
+            }
+            return { err: { code: "type.literalValue.incorrect_literal_value", value, message: "Incorrect literal value." } };
+        }
+    }),
     array: <S extends Spec<any, any>>(spec: S) => ({
         definition: {
             type: "array",

@@ -48,6 +48,7 @@ const myProduct = verify(productSpec, data).value();
 	 - `boolean`: Accepts booleans.
      - `symbol`: Accepts symbols.
 	 - `literal({ key1: 1, key2: 1, ... })`: Only accepts the literal values of the keys.
+     - `literalValue(value1, value2, ...)`: Only accepts these literal constant values. Return type is the union of the value types.
 	 - `array(spec)`: Accepts arrays of which the elements are according to specification `spec`.
 	 - `object(schema)`: Accepts object that follow the specified schema (see below). An object spec is strict by default: it does not except attributes that are not part of the schema.
 	 - `interface(schema)`: Accepts object that follow the specified schema (see below). an interface spec is, in contrast to the object spec, non-strict by default.
