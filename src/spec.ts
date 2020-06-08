@@ -80,6 +80,10 @@ export const verify = <S extends Spec<EvalResult<any>, {}>>(spec: S, value: unkn
     }
 };
 
+type TailArgs<Fn> = Fn extends (firstArg: unknown, ...args: infer TA) => unknown ? TA : never;
+
+export const makeVerifier = <S extends Spec<EvalResult<any>, {}>>(spec: S) => (...args: TailArgs<typeof verify>) => verify(spec, ...args)
+
 
 export const alias = <S extends Spec<EvalResult<any>, any>>(aliasName: string, spec: S): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
     return {

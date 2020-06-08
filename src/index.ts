@@ -1,4 +1,4 @@
-import {Spec, SpecConstraint, SpecOptions, GlobalOptions, constrain, optional, either, adjust, alias, definitionOf, extractAliases, verify, VerifiedType} from "./spec";
+import {Spec, SpecConstraint, SpecOptions, GlobalOptions, constrain, optional, either, adjust, alias, definitionOf, extractAliases, verify, VerifiedType, makeVerifier} from "./spec";
 import {ValidationError, FormatValidationError} from "./validation_error";
 import {Type} from "./type";
 import {Constraint} from "./constraint";
@@ -20,5 +20,6 @@ export {
     ValidationError,
     FormatValidationError,
     Type,
-    Constraint
+    Constraint,
+    makeVerifier
 };
