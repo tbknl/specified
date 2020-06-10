@@ -125,6 +125,22 @@ describe("spec", () => {
         const integerAbove25 = constrain(Type.number, [integer, above(25)]);
         staticAssertIsNotAny(integerAbove25);
 
+        // Static type checkL allows for the constraint input type to be broader than the spec type:
+        const dummyConstraintStringOrNumber = {
+            version: 1 as 1,
+            definition: { name: "dummyStringOrNumber" },
+            eval: (_value: string | number) => ({ err: null })
+        };
+        const dummyConstraintUnknownArray = {
+            version: 1 as 1,
+            definition: { name: "dummyUnknownArray" },
+            eval: (_value: unknown[]) => ({ err: null })
+        };
+        const constrainedSpec1 = constrain(Type.string, [dummyConstraintStringOrNumber]);
+        staticAssertIsNotAny(constrainedSpec1);
+        const constrainedSpec2 = constrain(Type.array(Type.boolean), [dummyConstraintUnknownArray]);
+        staticAssertIsNotAny(constrainedSpec2);
+
         it("checks the constraints of a spec", () => {
             const data = 36.5;
             chai.expect(verify(integerAbove25, data).err).to.be.an("object");
@@ -165,8 +181,6 @@ describe("spec", () => {
 
             chai.expect(verify(partiallyOverlapping, "four").err).to.be.an("object");
         });
-
-        // TODO: constrain with different constraint types (e.g. boolean[] and number[]).
 
         describe("definition", () => {
             const constraints = [Constraint.number.integer, Constraint.number.above(0)];
