@@ -8,13 +8,13 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"start": "node .",
-		"build": "npm run clean && tsc -p tsconfig.build.json",
+		"build": "tsc -p tsconfig.build.json",
 		"clean": "rimraf dist/*",
 		"pretest": "npm run build",
 		"test": "mocha --require ts-node/register \"test/**/*.test.ts*\"",
 		"lint": "tslint -p tsconfig.json",
 		"preversion": "npm run lint && npm test",
-		"prepack": "npm run lint && npm test",
+		"prepack": "npm run lint && npm run clean && npm test",
 		"watch-build": "onchange -i -k --await-write-finish 100 \"src/**/*.ts\" -- npm run build",
 		"watch-test": "onchange -i -k --await-write-finish 100 \"test/**/*.ts\" \"src/**/*.ts\" -i -- npm test",
 		"watch-lint": "onchange -i -k --await-write-finish 100 \"test/**/*.ts\" \"src/**/*.ts\" -i -- npm run lint"
