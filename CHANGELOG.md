@@ -14,6 +14,7 @@
 * Rewrite of `either` to support any amount of specs, instead of the maximum of 9 from before.
 * Added schema attribute descriptions to `Type.object` and `Type.interface` definitions.
 * Added `Type.literalValue` for literal constant values.
+* Added version 1 to Spec and SpecConstraint interface, to prevent older specs from accidentally being evaluated, and to prepare for potential future interface changes.
 * TODO!!!
 
 ## v0.4.1

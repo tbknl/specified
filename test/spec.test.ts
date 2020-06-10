@@ -6,6 +6,16 @@ import {
 import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed } from "./static-assert";
 
 
+const specWithUnknownVersion = {
+    ...Type.number,
+    version: 0 as 1
+};
+
+const constraintWithUnknownVersion = {
+    ...Constraint.number.integer,
+    version: 0 as 1
+};
+
 describe("spec", () => {
 
     describe("optional", () => {
@@ -97,6 +107,15 @@ describe("spec", () => {
             });
 
         });
+
+        describe("spec version", () => {
+
+            it("throws an error in case of an incorrect spec version", () => {
+                chai.expect(() => optional(specWithUnknownVersion)).to.throw();
+            });
+
+        });
+
     });
 
     describe("constrain", () => {
@@ -114,6 +133,7 @@ describe("spec", () => {
         it("is possible to make custom constraints", () => {
             const booleanArray = Type.array(Type.boolean);
             const exactlyOneTrue = {
+                version: 1 as 1,
                 definition: {
                     name: "exactlyOneTrue"
                 },
@@ -170,6 +190,22 @@ describe("spec", () => {
 
         });
 
+        describe("spec version", () => {
+
+            it("throws an error in case of an incorrect spec version", () => {
+                chai.expect(() => constrain(specWithUnknownVersion, [Constraint.number.integer])).to.throw();
+            });
+
+        });
+
+        describe("constraint version", () => {
+
+            it("throws an error in case of an incorrect constraint version", () => {
+                chai.expect(() => constrain(Type.number, [constraintWithUnknownVersion])).to.throw();
+            });
+
+        });
+
     });
 
     describe("adjust", () => {
@@ -196,6 +232,13 @@ describe("spec", () => {
 
         });
 
+        describe("spec version", () => {
+
+            it("throws an error in case of an incorrect spec version", () => {
+                chai.expect(() => adjust(specWithUnknownVersion, {})).to.throw();
+            });
+
+        });
     });
 
     describe("either", () => {
@@ -279,6 +322,15 @@ describe("spec", () => {
 
         });
 
+        describe("spec version", () => {
+
+            it("throws an error in case of one of the specs has an incorrect spec version", () => {
+                chai.expect(() => either(specWithUnknownVersion, Type.string)).to.throw();
+                chai.expect(() => either(Type.string, specWithUnknownVersion)).to.throw();
+            });
+
+        });
+
     });
 
     describe("validation error report", () => {
@@ -354,6 +406,13 @@ describe("spec", () => {
             chai.expect(definitionOf(aliasedAliasedSpec).alias).to.equal("overwrittenAlias");
         });
 
+        describe("spec version", () => {
+
+            it("throws an error in case of an incorrect spec version", () => {
+                chai.expect(() => alias("dummyAlias", specWithUnknownVersion)).to.throw();
+            });
+
+        });
     });
 
     describe("extractAliases", () => {

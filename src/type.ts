@@ -89,6 +89,7 @@ const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeNam
 
 export const Type = {
     unknown: {
+        version: 1 as 1,
         definition: {
             type: "unknown"
         },
@@ -97,6 +98,7 @@ export const Type = {
         }
     },
     null: {
+        version: 1 as 1,
         definition: {
             type: "null"
         },
@@ -108,6 +110,7 @@ export const Type = {
         }
     },
     string: {
+        version: 1 as 1,
         definition: {
             type: "string"
         },
@@ -119,6 +122,7 @@ export const Type = {
         }
     },
     number: {
+        version: 1 as 1,
         definition: {
             type: "number"
         },
@@ -130,6 +134,7 @@ export const Type = {
         }
     },
     boolean: {
+        version: 1 as 1,
         definition: {
             type: "boolean"
         },
@@ -141,6 +146,7 @@ export const Type = {
         }
     },
 	symbol: {
+        version: 1 as 1,
 		definition: {
 			type: "symbol"
 		},
@@ -152,6 +158,7 @@ export const Type = {
 		}
 	},
     literal: <D extends { [k: string]: true | 1 }>(def: D) => ({
+        version: 1 as 1,
         definition: {
             type: "literal",
             settings: { values: Object.keys(def) }
@@ -164,6 +171,7 @@ export const Type = {
         }
     }),
     literalValue: <V extends any[]>(...values: V) => ({
+        version: 1 as 1,
         definition: {
             type: "literalValue",
             settings: { values }
@@ -178,6 +186,7 @@ export const Type = {
         }
     }),
     array: <S extends Spec<any, any>>(spec: S) => ({
+        version: 1 as 1,
         definition: {
             type: "array",
             nested: { element: spec.definition }
@@ -215,18 +224,21 @@ export const Type = {
     }),
     object: <S extends Schema>(schema: S) => {
         return {
+            version: 1 as 1,
             definition: objectDefinition(schema, "object"),
             eval: objectEval(schema, true, "object")
         };
     },
     interface: <S extends Schema>(schema: S) => {
         return {
+            version: 1 as 1,
             definition: objectDefinition(schema, "interface"),
             eval: objectEval(schema, false, "interface")
         };
     },
     map: <T>(keySpec: Spec<EvalResult<string>>, valueSpec: Spec<EvalResult<T>>) => {
         return {
+            version: 1 as 1,
             definition: {
                 type: "map",
                 nested: {
@@ -273,6 +285,7 @@ export const Type = {
     tuple: <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple) => {
         // TODO: Add tuple to readme doc.
         return {
+            version: 1 as 1,
             definition: {
                 type: "tuple",
                 nested: specs.reduce((n, spec, i) => {
@@ -315,6 +328,7 @@ export const Type = {
     },
     instance: <T>(ctor: new() => T) => {
         return {
+            version: 1 as 1,
             definition: {
                 type: "instance",
                 settings: { className: "name" in ctor ? ctor.name : "" }
@@ -328,6 +342,7 @@ export const Type = {
         };
     },
     numeric: {
+        version: 1 as 1,
         definition: {
             type: "numeric"
         },
@@ -350,6 +365,7 @@ export const Type = {
             return r;
         }, {} as { [key: string]: true });
         return {
+            version: 1 as 1,
             definition: {
                 type: "booleanKey",
                 settings: { keys }

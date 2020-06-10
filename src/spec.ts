@@ -24,6 +24,7 @@ export interface ConstraintDefinition {
 }
 
 export interface SpecConstraint<T> {
+    readonly version: 1; // TODO: Add tests that check for version.
     readonly eval: (value: T) => { err?: ValidationFailure | null };
     readonly definition: ConstraintDefinition;
 }
@@ -44,6 +45,7 @@ type EvalResultSuccess<T> = { err: null; value: T; };
 export type EvalResult<T> = EvalResultFailure | EvalResultSuccess<T>;
 
 export interface Spec<R extends EvalResult<any>, LocalOpts extends {} = {}> {
+    readonly version: 1;
     readonly eval: (value: unknown, options: SpecOptions<LocalOpts>) => R;
     readonly definition: SpecDefinition;
 }
@@ -63,32 +65,43 @@ interface VerifyOptions {
 
 // TODO: Document backwards-incompatibility: result.err is of type ValidationFailure, has no report generating functions in it. Upgrade path: ...
 export const verify = <S extends Spec<EvalResult<any>, {}>>(spec: S, value: unknown, globalOptions: GlobalOptions = {}, verifyOptions: VerifyOptions = { errorClass: ValidationError }): VerifyResult<VerifiedType<S>> => {
-    const result = spec.eval(value, { global: globalOptions });
-    if (result.err) {
-        return {
-            err: result.err,
-            value: (): VerifiedType<S> => {
-                throw new verifyOptions.errorClass(result.err.message, result.err);
-            }
-        };
+    if (spec.version === 1) {
+        const result = spec.eval(value, { global: globalOptions });
+        if (result.err) {
+            return {
+                err: result.err,
+                value: (): VerifiedType<S> => {
+                    throw new verifyOptions.errorClass(result.err.message, result.err);
+                }
+            };
+        }
+        else {
+            return {
+                err: null,
+                value: () => result.value
+            };
+        }
     }
     else {
-        return {
-            err: null,
-            value: () => result.value
-        };
+        throw Error(`Unknown spec version '${spec.version}'`);
     }
 };
 
 
 export const alias = <S extends Spec<EvalResult<any>, any>>(aliasName: string, spec: S): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
-    return {
-        definition: {
-            ...spec.definition,
-            alias: aliasName
-        },
-        eval: spec.eval
-    };
+    if (spec.version === 1) {
+        return {
+            version: 1 as 1,
+            definition: {
+                ...spec.definition,
+                alias: aliasName
+            },
+            eval: spec.eval
+        };
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
 };
 
 
@@ -100,57 +113,85 @@ const removeAlias = (specDef: SpecDefinition): SpecDefinition => {
 
 
 export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constraints: Array<SpecConstraint<VerifiedType<S>>>): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
-    return {
-        definition: {
-            ...removeAlias(spec.definition),
-            constraints: [...(spec.definition.constraints || []), ...constraints.map(c => c.definition)]
-        },
-        eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>): EvalResultOf<S> => {
-            const candidateResult = spec.eval(value, options);
-            if (!candidateResult.err) {
-                for (let c of constraints) {
-                    const { err } = c.eval(candidateResult.value);
-                    if (err) {
-                        return { err };
+    if (spec.version === 1) {
+        if (constraints.reduce((r, constraint) => r && constraint.version === 1, true)) {
+        return {
+            version: 1 as 1,
+            definition: {
+                ...removeAlias(spec.definition),
+                constraints: [...(spec.definition.constraints || []), ...constraints.map(c => c.definition)]
+            },
+            eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>): EvalResultOf<S> => {
+                const candidateResult = spec.eval(value, options);
+                if (!candidateResult.err) {
+                    for (let c of constraints) {
+                        const { err } = c.eval(candidateResult.value);
+                        if (err) {
+                            return { err };
+                        }
                     }
                 }
+                return candidateResult;
             }
-            return candidateResult;
+        };
         }
-    };
+        else {
+            throw Error(`Unknown constraint version '${constraints.map(c => c.version)}'`);
+        }
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
 };
 
 
 export const optional = <S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true } => {
-    const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
-    return {
-        definition: {
-            ...spec.definition,
-            flags: [...(spec.definition.flags || []), "optional"],
+    if (spec.version === 1) {
+        const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
+        return {
+            version: 1 as 1,
+            definition: {
+                ...spec.definition,
+                flags: [...(spec.definition.flags || []), "optional"],
+                ...defaultValue
+            },
+            eval: spec.eval,
+            optional: true as true,
             ...defaultValue
-        },
-        eval: spec.eval,
-        optional: true as true,
-        ...defaultValue
-    };
+        };
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
 };
 
 
 export const adjust = <S extends Spec<EvalResult<any>, any>>(spec: S, adjustedOptions: LocalOptionsOf<S>): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {
-    return {
-        definition: {
-            ...removeAlias(spec.definition),
-            adjustments: { ...adjustedOptions, ...spec.definition.adjustments }
-        },
-        eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>) => {
-            return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
-        }
-    };
+    if (spec.version === 1) {
+        return {
+            version: 1 as 1,
+            definition: {
+                ...removeAlias(spec.definition),
+                adjustments: { ...adjustedOptions, ...spec.definition.adjustments }
+            },
+            eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>) => {
+                return spec.eval(value, { local: { ...adjustedOptions, ...options.local }, global: options.global });
+            }
+        };
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
 };
 
 
 export const definitionOf = <S extends Spec<EvalResult<any>, any>>(spec: S) => {
-    return spec.definition;
+    if (spec.version === 1) {
+        return spec.definition;
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
 };
 
 
@@ -192,30 +233,36 @@ type TupleSpecEvalResultTypes<T> = { [P in keyof T]: SpecEvalResultType<T[P]> };
 type TupleTypeUnion<TT> = TT extends Array<infer U> ? U : never;
 
 export const either = <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple) => {
-    const nested = specs.reduce((n, spec, index) => {
-        n[index + 1] = spec.definition;
-        return n;
-    }, {});
-    return {
-        definition: {
-            type: "either",
-            nested
-        },
-        eval: (value: unknown, options: SpecOptions): TupleTypeUnion<TupleSpecEvalResultTypes<SpecsTuple>> | EvalResultFailure => {
-            const validationErrors: ValidationFailure[] = [];
+    if (specs.reduce((r, spec) => r && spec.version === 1, true)) {
+        const nested = specs.reduce((n, spec, index) => {
+            n[index + 1] = spec.definition;
+            return n;
+        }, {});
+        return {
+            version: 1 as 1,
+            definition: {
+                type: "either",
+                nested
+            },
+            eval: (value: unknown, options: SpecOptions): TupleTypeUnion<TupleSpecEvalResultTypes<SpecsTuple>> | EvalResultFailure => {
+                const validationErrors: ValidationFailure[] = [];
 
-            for (const spec of specs) {
-                const result = spec.eval(value, { global: options.global });
-                if (result.err) { validationErrors.push(result.err); } else { return result; }
+                for (const spec of specs) {
+                    const result = spec.eval(value, { global: options.global });
+                    if (result.err) { validationErrors.push(result.err); } else { return result; }
+                }
+
+                return { err: {
+                    code: "either.no_matching_spec",
+                    value,
+                    message: "Evaluation of value failed for every possible spec.",
+                    nestedErrors: validationErrors
+                } };
             }
-
-            return { err: {
-                code: "either.no_matching_spec",
-                value,
-                message: "Evaluation of value failed for every possible spec.",
-                nestedErrors: validationErrors
-            } };
-        }
-    };
+        };
+    }
+    else {
+        throw Error(`Unknown spec version '${specs.map(spec => spec.version)}'`);
+    }
 };
 

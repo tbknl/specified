@@ -421,6 +421,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
+                version: 1 as 1,
                 definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
@@ -653,6 +654,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
+                version: 1 as 1,
                 definition: { name: "error-constraint" },
                 eval: (_value: number) => {
                     throw new Error(errorMessage);
@@ -822,6 +824,7 @@ describe("type", () => {
         describe("non-ValidationError", () => {
             const errorMessage = "Not a validation error.";
             const errorConstraint = {
+                version: 1 as 1,
                 definition: { name: "error-constraint" },
                 eval: (_value: string) => {
                     throw new Error(errorMessage);

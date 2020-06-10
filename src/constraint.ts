@@ -2,6 +2,7 @@ export const Constraint = {
     generic: {
         oneOf: <T>(...options: T[]) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "oneOf",
                     settings: { options }
@@ -18,6 +19,7 @@ export const Constraint = {
     },
     number: {
         integer: {
+            version: 1 as 1,
             definition: {
                 name: "integer"
             },
@@ -30,6 +32,7 @@ export const Constraint = {
             }
         },
         finite: {
+            version: 1 as 1,
             definition: {
                 name: "finite"
             },
@@ -43,6 +46,7 @@ export const Constraint = {
         },
         above:  (lowerLimit: number) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "above",
                     settings: { lowerLimit }
@@ -58,6 +62,7 @@ export const Constraint = {
         },
         below: (upperLimit: number) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "below",
                     settings: { upperLimit }
@@ -73,6 +78,7 @@ export const Constraint = {
         },
         atLeast:  (lowerLimit: number) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "atLeast",
                     settings: { lowerLimit }
@@ -88,6 +94,7 @@ export const Constraint = {
         },
         atMost: (upperLimit: number) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "atMost",
                     settings: { upperLimit }
@@ -104,6 +111,7 @@ export const Constraint = {
     },
     string: {
         notEmpty: {
+            version: 1 as 1,
             definition: {
                 name: "notEmpty"
             },
@@ -117,6 +125,7 @@ export const Constraint = {
         },
         length: ({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "length",
                     settings: { min, max }
@@ -142,6 +151,7 @@ export const Constraint = {
         },
         regex: (re: RegExp, custom: { errorMessage: string; errorCode: string; } = { errorMessage: "Regex mismatch.", errorCode: "constraint.string.regex" }) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "regex",
                     settings: { expression: re.source }
@@ -157,6 +167,7 @@ export const Constraint = {
         },
         startsWith: (prefix: string) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "startsWith",
                     settings: { prefix }
@@ -172,6 +183,7 @@ export const Constraint = {
         },
         endsWith: (suffix: string) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "endsWith",
                     settings: { suffix }
@@ -189,6 +201,7 @@ export const Constraint = {
     map: {
         size: <T extends {}>({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "size",
                     settings: { min, max }
@@ -217,6 +230,7 @@ export const Constraint = {
     array: {
         length: <T>({ min, max }: { min?: number, max: number } | { min: number, max?: number }) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "length",
                     settings: { min, max }
@@ -240,6 +254,7 @@ export const Constraint = {
         },
         includes: <T>(includedValue: T) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "includes",
                     settings: { value: includedValue }
@@ -255,6 +270,7 @@ export const Constraint = {
         },
         unique: <U, T extends U>(equalsFunc: (a: U, b: U) => boolean = (a: U, b: U) => a === b) => {
             return {
+                version: 1 as 1,
                 definition: {
                     name: "unique"
                 },
