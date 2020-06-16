@@ -146,20 +146,36 @@ export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constra
 };
 
 
-export const optional = <S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true } => {
+export function optional<S extends Spec<EvalResult<any>, any>>(spec: S): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true };
+export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options: {}): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true };
+export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options: { defaultValue: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: false };
+export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & ({ optional: true } | { optional: false }) {
     if (spec.version === 1) {
-        const defaultValue = options && "defaultValue" in options ? { defaultValue: options.defaultValue } : {};
-        return {
-            version: 1 as 1,
-            definition: {
-                ...spec.definition,
-                flags: [...(spec.definition.flags || []), "optional"],
+        if (options && typeof options.defaultValue !== "undefined") {
+            const defaultValue = options.hasOwnProperty("defaultValue") ? { defaultValue: options.defaultValue } : {};
+            return {
+                version: 1 as 1,
+                definition: {
+                    ...spec.definition,
+                    flags: [...(spec.definition.flags || []), "optional"],
+                    ...defaultValue
+                },
+                eval: spec.eval,
+                optional: false as false,
                 ...defaultValue
-            },
-            eval: spec.eval,
-            optional: true as true,
-            ...defaultValue
-        };
+            };
+        }
+        else {
+            return {
+                version: 1 as 1,
+                definition: {
+                    ...spec.definition,
+                    flags: [...(spec.definition.flags || []), "optional"],
+                },
+                eval: spec.eval,
+                optional: true as true,
+            };
+        }
     }
     else {
         throw Error(`Unknown spec version '${spec.version}'`);

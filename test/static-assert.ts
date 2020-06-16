@@ -10,5 +10,8 @@ export function staticAssertUndefinedNotAllowed<T>(_x: UndefinedNotAllowed<T>) {
 type IsArray<T> = (T extends Array<any> ? never : T) extends never ? IsNotAny<T> : never;
 export function staticAssertIsArray<T>(_x: IsArray<T>) {}
 
+type OptionalProperties<T> = { [K in keyof T]-?: ({} extends { [P in K]: T[K] } ? K : never) }[keyof T];
+export function staticAssertIsPropertyOptional<V, P extends OptionalProperties<V>>(_p: P, _x: V) { }
+
 // TODO: Apply static assertions in all test files.
 

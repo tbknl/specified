@@ -3,7 +3,7 @@ import {
     Type, verify, optional, constrain, adjust, either, alias, definitionOf,
     extractAliases, Constraint, FormatValidationError
 } from "..";
-import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed } from "./static-assert";
+import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsPropertyOptional } from "./static-assert";
 
 
 const specWithUnknownVersion = {
@@ -32,9 +32,11 @@ describe("spec", () => {
             staticAssertIsNotAny(value.gender);
             staticAssertUndefinedNotAllowed(value);
             staticAssertUndefinedNotAllowed(value.name);
-            const typedValue: { name: string, age?: number, gender?: string } = value;
-            // TODO!!! gender should not be optional in typedValue's type, because it has a defaultValue!
+            staticAssertIsPropertyOptional("age", value);
+            staticAssertUndefinedNotAllowed(value.gender);
+            const typedValue: { name: string, age?: number, gender: string } = value;
             chai.expect(typedValue).to.have.property("name").that.equals("test1");
+            chai.expect(typedValue).to.have.property("gender").that.equals("unknown");
         });
 
         it("accepts data in an optional attribute", () => {

@@ -2,9 +2,11 @@ import { Spec, EvalResult, ValidationFailure, VerifiedType }  from "./spec";
 
 interface OptionalSpec extends Spec<any, any> {
     optional: true;
+}
+interface NonOptionalSpec extends Spec<any, any> {
+    optional?: false;
     defaultValue?: unknown;
 }
-interface NonOptionalSpec extends Spec<any, any> { optional?: false; }
 
 type NonOptionalAttributes<S> = {
     [A in keyof S]: S[A] extends { optional: true } ? never : A;
@@ -63,13 +65,12 @@ const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeNam
     for (let attrIndex = 0; attrIndex < attributes.length && (!settings.failEarly || !nestedErrors.length); ++attrIndex) {
         const attr = attributes[attrIndex];
         const attrSpec = schema[attr];
-        if (!(attr in data) && !attrSpec.optional) {
+        if (!(attr in data) && !attrSpec.optional && !attrSpec.hasOwnProperty("defaultValue")) {
             nestedErrors.push({ code: `type.${typeName}.missing_attribute`, value: data, message: `Missing attribute: "${attr}".`, key: attr });
         }
         else {
             const pass = Symbol();
-            const value: unknown = !attrSpec.optional ? data[attr] :
-                data.hasOwnProperty(attr) ? data[attr] : attrSpec.hasOwnProperty("defaultValue") ? attrSpec.defaultValue : pass;
+            const value: unknown = data.hasOwnProperty(attr) ? data[attr] : attrSpec.optional ? pass : attrSpec.hasOwnProperty("defaultValue") ? attrSpec.defaultValue : undefined;
             if (value !== pass) {
                 const attrResult = attrSpec.eval(value, { global: options.global });
                 if (attrResult.err) {

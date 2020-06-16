@@ -16,6 +16,7 @@
 * Added `Type.literalValue` for literal constant values.
 * Added version 1 to Spec and SpecConstraint interface, to prevent older specs from accidentally being evaluated, and to prepare for potential future interface changes.
 * Added `allowed` field to `ValidationFailure` interface. And filled this field where applicable in the built-in types and constraints.
+* Fix for the type bug where the resulting property of an optional attribute was marked as optional when a defaultValue was provided.
 * TODO!!!
 
 ## v0.4.1
