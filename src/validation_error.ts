@@ -10,6 +10,7 @@ interface ValidationErrorJsonReport {
 interface ValidationFailure {
     code: string;
     value: unknown;
+    allowed?: unknown;
     message: string;
     key?: string | number;
     nestedErrors?: ValidationFailure[];
@@ -20,6 +21,7 @@ export class ValidationError implements ValidationFailure {
     public readonly message: string;
     public readonly code: string;
     public readonly value: unknown;
+    public readonly allowed: unknown;
     public readonly key: ValidationErrorKey | undefined;
 
     public constructor(message: string, options?: ValidationFailure) {
@@ -27,21 +29,26 @@ export class ValidationError implements ValidationFailure {
         this.message = message;
         this.code = options ? options.code : "";
         this.value = options ? options.value : undefined;
+        this.allowed = options ? options.allowed : undefined;
         this.nestedErrors = options && options.nestedErrors ? options.nestedErrors.map(ne => new ValidationError(ne.message, ne)) : [];
     }
 
+    // DEPRECATED
     public getKey() {
         return this.key;
     }
 
+    // DEPRECATED
     public getNestedErrors() {
         return this.nestedErrors;
     }
 
+    // DEPRECATED
     public generateReportJson(): ValidationErrorJsonReport {
         return FormatValidationError.generateReportJson(this);
     }
 
+    // DEPRECATED
     public generateErrorPathList() {
         return FormatValidationError.generateErrorPathList(this);
     }

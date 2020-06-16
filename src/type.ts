@@ -104,7 +104,7 @@ export const Type = {
         },
         eval: (value: unknown) => {
             if (value !== null) {
-                return { err: { code: "type.null.not_null", value, message: "Not null." } };
+                return { err: { code: "type.null.not_null", value, allowed: null, message: "Not null." } };
             }
             return { err: null, value: null };
         }
@@ -165,7 +165,7 @@ export const Type = {
         },
         eval: (value: unknown) => {
             if (typeof value !== "string" || !def.hasOwnProperty(value)) {
-                return { err: { code: "type.literal.incorrect_literal", value, message: "Incorrect literal." } };
+                return { err: { code: "type.literal.incorrect_literal", value, allowed: Object.keys(def), message: "Incorrect literal." } };
             }
             return { err: null, value: value as keyof D };
         }
@@ -182,7 +182,7 @@ export const Type = {
                     return { err: null, value: value as V[number] };
                 }
             }
-            return { err: { code: "type.literalValue.incorrect_literal_value", value, message: "Incorrect literal value." } };
+            return { err: { code: "type.literalValue.incorrect_literal_value", value, allowed: values, message: "Incorrect literal value." } };
         }
     }),
     array: <S extends Spec<any, any>>(spec: S) => ({
@@ -368,7 +368,10 @@ export const Type = {
             version: 1 as 1,
             definition: {
                 type: "booleanKey",
-                settings: { keys }
+                settings: {
+                    keys,
+                    caseInsensitive
+                }
             },
             eval: (value: unknown) => {
                 const valueStr = caseInsensitive ? `${value}`.toLowerCase() : `${value}`;
@@ -379,7 +382,12 @@ export const Type = {
                     return { err: null, value: false };
                 }
                 else {
-                    return { err: { code: "type.booleanKey.invalid_key", value, message: "Not a valid boolean value." } };
+                    return { err: {
+                        code: "type.booleanKey.invalid_key",
+                        value,
+                        allowed: [...keys.truthy, ...keys.falsy],
+                        message: "Not a valid boolean value."
+                    } };
                 }
             }
         };

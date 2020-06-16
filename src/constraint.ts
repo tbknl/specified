@@ -11,6 +11,7 @@ export const Constraint = {
                     return { err: options.indexOf(value) < 0 ? {
                         code: "constraint.generic.oneOf.unknown_value",
                         value,
+                        allowed: options,
                         message: "Not one of the accepted options."
                     } : null };
                 }
@@ -160,6 +161,7 @@ export const Constraint = {
                     return { err: !re.test(value) ? {
                         code: custom.errorCode,
                         value,
+                        allowed: re.source,
                         message: custom.errorMessage
                     } : null };
                 }

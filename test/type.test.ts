@@ -35,6 +35,7 @@ describe("type", () => {
             chai.expect(verify(Type.null, undefined).err).to.have.property("code", "type.null.not_null");
             chai.expect(verify(Type.null, []).err).to.have.property("code", "type.null.not_null");
             chai.expect(verify(Type.null, {}).err).to.have.property("code", "type.null.not_null");
+            chai.expect(verify(Type.null, {}).err).to.have.property("allowed", null);
         });
 
         it("has the correct definition type", () => {
@@ -134,7 +135,9 @@ describe("type", () => {
 
         it("rejects values not in the literal list", () => {
             const value1or2 = Type.literal({ value1: 1, value2: 1 });
-            chai.expect(verify(value1or2, "value3").err).to.have.property("code", "type.literal.incorrect_literal");
+            const err = verify(value1or2, "value3").err;
+            chai.expect(err).to.have.property("code", "type.literal.incorrect_literal");
+            chai.expect(err).to.have.property("allowed").to.eql(["value1", "value2"]);
         });
 
         it("rejects non-string values", () => {
@@ -171,6 +174,7 @@ describe("type", () => {
             const multiliteral = Type.literalValue(123 as 123, "abc" as "abc", true as true);
             chai.expect(verify(multiliteral, 456).err).to.have.property("code", "type.literalValue.incorrect_literal_value");
             chai.expect(verify(multiliteral, false).err).to.have.property("code", "type.literalValue.incorrect_literal_value");
+            chai.expect(verify(multiliteral, false).err).to.have.property("allowed").to.eql([123, "abc", true]);
         });
 
         it("has the correct definition type", () => {
@@ -254,7 +258,9 @@ describe("type", () => {
         });
 
         it("rejects a value if it is not set as truthy or falsy while other falsy keys are set", () => {
-            chai.expect(verify(truthyAndFalsyBooleanKeySpec, "InvalidKey").err).to.have.property("code", "type.booleanKey.invalid_key");
+            const err = verify(truthyAndFalsyBooleanKeySpec, "InvalidKey").err;
+            chai.expect(err).to.have.property("code", "type.booleanKey.invalid_key");
+            chai.expect(err).to.have.property("allowed").to.eql(["Yes", "1", "true", "ON", "No", "0", ""]);
         });
 
         it("matches case-different strings if caseInsensitive option is true", () => {

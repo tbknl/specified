@@ -214,14 +214,19 @@ describe("constraint", () => {
         });
 
         describe("regex", () => {
-            const onlyA = constrain(Type.string, [Constraint.string.regex(/^A+$/)]);
+            const regex = /^A+$/;
+            const onlyA = constrain(Type.string, [Constraint.string.regex(regex)]);
 
             it("accepts strings match the specified regex", () => {
                 chai.expect(verify(onlyA, "AAA").value()).to.equal("AAA");
             });
 
             it("rejects strings that do not match the specified regex", () => {
-                chai.expect(verify(onlyA, "ABBA").err).to.have.property("code", "constraint.string.regex");
+                const value = "ABBA";
+                const err = verify(onlyA, value).err;
+                chai.expect(err).to.have.property("code", "constraint.string.regex");
+                chai.expect(err).to.have.property("value", value);
+                chai.expect(err).to.have.property("allowed", regex.source);
             });
 
             it("allows to specify a custom error message and error code", () => {

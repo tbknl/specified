@@ -4,6 +4,7 @@ import {ValidationError} from "./validation_error";
 export interface ValidationFailure {
     code: string;
     value: unknown;
+    allowed?: unknown;
     message: string;
     key?: string | number;
     nestedErrors?: ValidationFailure[];
