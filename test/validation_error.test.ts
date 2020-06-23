@@ -143,6 +143,25 @@ describe("validation error", () => {
             });
         });
 
+        it("includes error code when switched on in the options", () => {
+            const err = verify(Type.string, 123).err;
+            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { code: true } });
+            chai.expect(errorReport).to.have.property("code").that.equals("type.string.not_a_string");
+        });
+
+        it("includes erroneous value when switched on in the options", () => {
+            const value = 123;
+            const err = verify(Type.string, value).err;
+            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { value: true } });
+            chai.expect(errorReport).to.have.property("value").that.equals(value);
+        });
+
+        it("includes allowed values when switched on in the options", () => {
+            const err = verify(Type.literal({ a: 1, b: 1 }), "c").err;
+            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { allowed: true } });
+            chai.expect(errorReport).to.have.property("allowed").that.eql(["a", "b"]);
+        });
+
     });
 
     describe("generate error path list", () => {
@@ -204,6 +223,28 @@ describe("validation error", () => {
                 }
             ]);
         });
+
+        it("includes error code when switched on in the options", () => {
+            const err = verify(Type.string, 123).err;
+            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { code: true } }) || [];
+            chai.expect(errorPathList[0]).to.have.property("code").that.equals("type.string.not_a_string");
+        });
+
+
+        it("includes erroneous value when switched on in the options", () => {
+            const value = 123;
+            const err = verify(Type.string, value).err;
+            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { value: true } }) || [];
+            chai.expect(errorPathList[0]).to.have.property("value").that.equals(value);
+        });
+
+
+        it("includes allowed values code when switched on in the options", () => {
+            const err = verify(Type.literal({ a: 1, b: 1 }), "c").err;
+            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { allowed: true } }) || [];
+            chai.expect(errorPathList[0]).to.have.property("allowed").that.eql(["a", "b"]);
+        });
+
 
     });
 

@@ -359,7 +359,21 @@ describe("spec", () => {
                 chai.expect(result.err).to.be.an("object");
                 const report = result.err && FormatValidationError.generateReportJson(result.err);
                 chai.expect(report).to.eql({
-                    msg: "Not a number." // TODO: Type identifiers, with coupled messages?
+                    msg: "Not a number."
+                });
+            });
+
+            it("includes indicated optional fields in the report", () => {
+                const value = "not_null";
+                const result = verify(Type.null, value);
+                chai.expect(result.err).to.be.an("object");
+                const includedFields = { message: true, code: true, value: true, allowed: true };
+                const report = result.err && FormatValidationFailure.generateReportJson(result.err, { include: includedFields });
+                chai.expect(report).to.eql({
+                    msg: "Not null.",
+                    code: "type.null.not_null",
+                    value,
+                    allowed: null
                 });
             });
 
@@ -368,7 +382,7 @@ describe("spec", () => {
                 const result = verify(positiveNumberSpec, -1);
                 const report = result.err && FormatValidationError.generateReportJson(result.err);
                 chai.expect(report).to.eql({
-                    msg: "Not above 0." // TODO: Type identifiers, with coupled TEMPLATED messages?
+                    msg: "Not above 0."
                 });
             });
 
@@ -399,12 +413,6 @@ describe("spec", () => {
                     ]
                 });
             });
-
-            // TODO: Nested type: object.
-            // TODO: Nested type: object with optional field.
-            // TODO: Nested type: map.
-            // TODO: Nested type: array.
-            // TODO: Disjunctive specs (either).
 
         });
 

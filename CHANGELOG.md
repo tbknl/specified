@@ -17,7 +17,7 @@
 * Added version 1 to Spec and SpecConstraint interface, to prevent older specs from accidentally being evaluated, and to prepare for potential future interface changes.
 * Added `allowed` field to `ValidationFailure` interface. And filled this field where applicable in the built-in types and constraints.
 * Fix for the type bug where the resulting property of an optional attribute was marked as optional when a defaultValue was provided.
-* TODO!!!
+* Added `code`, `value` and `allowed` to optionally be included in formatted errors.
 
 ## v0.4.1
 * Added automatic resolving of generic type of complex schema models. Hugely improves inspecting value types of verification result variables in TS editors.

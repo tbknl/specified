@@ -1,18 +1,28 @@
 type ValidationErrorKey = string | number;
 
 interface ValidationErrorJsonReport {
-    msg: string;
+    msg?: string;
+    code?: string;
+    value?: unknown;
+    allowed?: unknown;
     key?: ValidationErrorKey;
     nested?: ValidationErrorJsonReport[];
 }
 
+type ValidationErrorPathList = Array<{
+    path: ValidationErrorKey[];
+    msg?: string;
+    code?: string;
+    value?: unknown;
+    allowed?: unknown;
+}>;
 
 interface ValidationFailure {
     code: string;
     value: unknown;
     allowed?: unknown;
     message: string;
-    key?: string | number;
+    key?: ValidationErrorKey;
     nestedErrors?: ValidationFailure[];
 }
 
@@ -58,29 +68,74 @@ export class ValidationError implements ValidationFailure {
     }
 }
 
-export const FormatValidationError = {
-    generateReportJson(err: ValidationFailure): ValidationErrorJsonReport {
+interface ErrorReportOptions {
+    include?: { message?: boolean; code?: boolean; value?: boolean; allowed?: boolean; };
+}
+
+interface ErrorReportOptionsImpl {
+    include: { message: boolean; code: boolean; value: boolean; allowed: boolean; };
+}
+
+export const FormatValidationError = (() => {
+    const generateReportJsonImpl = (err: ValidationFailure, options: ErrorReportOptionsImpl): ValidationErrorJsonReport => {
         const keyProp = typeof err.key === "undefined" ? {} : { key: err.key };
-        const nestedProp = err.nestedErrors ? { nested: err.nestedErrors.map(ve => this.generateReportJson(ve)) } : {};
+        const nestedProp = err.nestedErrors ? { nested: err.nestedErrors.map(ve => generateReportJsonImpl(ve, options)) } : {};
         return {
-            msg: err.message,
+            ...(options.include.message && { msg: err.message }),
+            ...(options.include.code && { code: err.code }),
+            ...(options.include.value && { value: err.value }),
+            ...(options.include.allowed && { allowed: err.allowed }),
             ...keyProp,
             ...nestedProp
         };
-    },
-    generateErrorPathList(err: ValidationFailure) {
-        const errorPathList: { path: ValidationErrorKey[], msg: string }[] = [];
+    };
+
+    const generateErrorPathListImpl = (err: ValidationFailure, options: ErrorReportOptionsImpl): ValidationErrorPathList => {
+        //const errorPathList: { path: ValidationErrorKey[], msg?: string }[] = [];
         const pathKey = typeof err.key !== "undefined" ? [err.key] : [];
         if (err.nestedErrors) {
-            err.nestedErrors.forEach(ne => {
-                errorPathList.push(...this.generateErrorPathList(ne).map(nep => {
-                    return { path: pathKey.concat(nep.path), msg: nep.msg };
-                }));
-            });
+            return err.nestedErrors.reduce((acc, ne) => acc.concat(generateErrorPathListImpl(ne, options).map(nep => ({
+                path: pathKey.concat(nep.path),
+                ...(options.include.message && { msg: nep.msg }),
+                ...(options.include.code && { code: nep.code }),
+                ...(options.include.value && { value: nep.value }),
+                ...(options.include.allowed && { allowed: nep.allowed })
+            }))), [] as ValidationErrorPathList);
         }
         else {
-            errorPathList.push({ path: pathKey, msg: err.message });
+            return [{
+                path: pathKey,
+                ...(options.include.message && { msg: err.message }),
+                ...(options.include.code && { code: err.code }),
+                ...(options.include.value && { value: err.value }),
+                ...(options.include.allowed && { allowed: err.allowed })
+            }];
         }
-        return errorPathList;
-    }
-};
+        //return errorPathList;
+    };
+
+    return {
+        generateReportJson(err: ValidationFailure, options?: ErrorReportOptions): ValidationErrorJsonReport {
+            const optionsImpl = {
+                include: {
+                    message: !options || !options.include || !options.include.hasOwnProperty("message") || options.include.message || false,
+                    code: options && options.include && options.include.code || false,
+                    value: options && options.include && options.include.value || false,
+                    allowed: options && options.include && options.include.allowed || false,
+                }
+            };
+            return generateReportJsonImpl(err, optionsImpl);
+        },
+        generateErrorPathList(err: ValidationFailure, options?: ErrorReportOptions) {
+            const optionsImpl = {
+                include: {
+                    message: !options || !options.include || !options.include.hasOwnProperty("message") || options.include.message || false,
+                    code: options && options.include && options.include.code || false,
+                    value: options && options.include && options.include.value || false,
+                    allowed: options && options.include && options.include.allowed || false,
+                }
+            };
+            return generateErrorPathListImpl(err, optionsImpl);
+        }
+    };
+})();
