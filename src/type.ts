@@ -284,7 +284,6 @@ export const Type = {
         };
     },
     tuple: <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple) => {
-        // TODO: Add tuple to readme doc.
         return {
             version: 1 as 1,
             definition: {

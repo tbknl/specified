@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import { staticAssertIsNotAny, staticAssertIsArray, staticAssertUndefinedNotAllowed } from "./static-assert";
-import { Type, verify, either } from "..";
+import { Type, verify, either, optional } from "..";
 
 
 describe("pattern", () => {
@@ -62,12 +62,18 @@ describe("pattern", () => {
             cylinders: Type.number
         });
 
-        const carSpec = either(electricCarSpec, fuelCarSpec);
+        const otherCarSpec = Type.object({
+            ...carBaseSchema,
+            engine: optional(Type.literal({}))
+        });
+
+        const carSpec = either(electricCarSpec, fuelCarSpec, otherCarSpec);
 
         it("infers the correct type", () => {
             const car = verify(carSpec, { engine: "electric", brand: "Tesla", model: "Model 4", batteries: 24 }).value();
             chai.expect(car.engine).to.equal("electric");
             if (car.engine === "electric") {
+                staticAssertIsNotAny(car.batteries);
                 chai.expect(car.batteries).to.equal(24);
             }
             else {

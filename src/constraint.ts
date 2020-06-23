@@ -277,7 +277,6 @@ export const Constraint = {
                     name: "unique"
                 },
                 eval: (value: T[]) => {
-                    // TODO: Add warning note to documentation that this function does 1/2 * (N^2 - N) comparisons.
                     for (let i = 0; i < value.length; i++) {
                         for (let j = i + 1; j < value.length; j++) {
                             if (equalsFunc(value[i], value[j])) {

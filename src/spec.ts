@@ -17,7 +17,7 @@ export interface ConstraintDefinition {
 }
 
 export interface SpecConstraint<T> {
-    readonly version: 1; // TODO: Add tests that check for version.
+    readonly version: 1;
     readonly eval: (value: T) => { err?: ValidationFailure | null };
     readonly definition: ConstraintDefinition;
 }
@@ -56,7 +56,6 @@ interface VerifyOptions {
     errorClass: new (msg: string, err: ValidationFailure) => ValidationFailure;
 }
 
-// TODO: Document backwards-incompatibility: result.err is of type ValidationFailure, has no report generating functions in it. Upgrade path: ...
 export const verify = <S extends Spec<EvalResult<any>, {}>>(spec: S, value: unknown, globalOptions: GlobalOptions = {}, verifyOptions: VerifyOptions = { errorClass: ValidationError }): VerifyResult<VerifiedType<S>> => {
     if (spec.version === 1) {
         const result = spec.eval(value, { global: globalOptions });
