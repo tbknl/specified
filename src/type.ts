@@ -327,7 +327,7 @@ export const Type = {
             }
         };
     },
-    instance: <T>(ctor: new() => T) => {
+    instance: <T>(ctor: new(..._args: unknown[]) => T) => {
         return {
             version: 1 as 1,
             definition: {

@@ -211,6 +211,15 @@ describe("type", () => {
             });
         });
 
+        it("handles classes of which the constructor has parameters", () => {
+            class MyClass2 {
+                constructor(_x: number) {}
+            }
+            const myClass2Spec = Type.instance(MyClass2);
+            const myClass2Instance = new MyClass2(123);
+            chai.expect(verify(myClass2Spec, myClass2Instance).value()).to.equal(myClass2Instance);
+        });
+
     });
 
     describe("numeric", () => {
