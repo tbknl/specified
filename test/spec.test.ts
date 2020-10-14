@@ -1,7 +1,7 @@
 import * as chai from "chai";
 import {
     Type, verify, optional, constrain, adjust, either, alias, definitionOf,
-    extractAliases, Constraint, FormatValidationError
+    extractAliases, Constraint, FormatValidationFailure
 } from "..";
 import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsPropertyOptional } from "./static-assert";
 
@@ -357,7 +357,7 @@ describe("spec", () => {
                 const numberSpec = Type.number;
                 const result = verify(numberSpec, "not_a_number");
                 chai.expect(result.err).to.be.an("object");
-                const report = result.err && FormatValidationError.generateReportJson(result.err);
+                const report = result.err && FormatValidationFailure.generateReportJson(result.err);
                 chai.expect(report).to.eql({
                     msg: "Not a number."
                 });
@@ -380,7 +380,7 @@ describe("spec", () => {
             it("reports correctly on constraints", () => {
                 const positiveNumberSpec = constrain(Type.number, [Constraint.number.above(0)]);
                 const result = verify(positiveNumberSpec, -1);
-                const report = result.err && FormatValidationError.generateReportJson(result.err);
+                const report = result.err && FormatValidationFailure.generateReportJson(result.err);
                 chai.expect(report).to.eql({
                     msg: "Not above 0."
                 });
@@ -401,7 +401,7 @@ describe("spec", () => {
                         city: "Outoftown"
                     }
                 });
-                const report = result.err && FormatValidationError.generateReportJson(result.err);
+                const report = result.err && FormatValidationFailure.generateReportJson(result.err);
                 chai.expect(report).to.eql({
                     msg: "Invalid attribute data.",
                     nested: [

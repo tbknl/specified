@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import { Type, verify, ValidationError, FormatValidationError, either } from "..";
+import { Type, verify, ValidationError, FormatValidationFailure, either } from "..";
 
 const dummyValidationFailure = {
     code: "dummy",
@@ -58,7 +58,7 @@ describe("validation error", () => {
             };
             const result = verify(nestedSpec, data);
             chai.expect(result.err).to.be.an("object")
-            chai.expect(result.err && FormatValidationError.generateReportJson(result.err)).to.eql({
+            chai.expect(result.err && FormatValidationFailure.generateReportJson(result.err)).to.eql({
 				msg: "Invalid attribute data.",
 				nested: [
 					{
@@ -145,20 +145,20 @@ describe("validation error", () => {
 
         it("includes error code when switched on in the options", () => {
             const err = verify(Type.string, 123).err;
-            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { code: true } });
+            const errorReport = err && FormatValidationFailure.generateReportJson(err, { include: { code: true } });
             chai.expect(errorReport).to.have.property("code").that.equals("type.string.not_a_string");
         });
 
         it("includes erroneous value when switched on in the options", () => {
             const value = 123;
             const err = verify(Type.string, value).err;
-            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { value: true } });
+            const errorReport = err && FormatValidationFailure.generateReportJson(err, { include: { value: true } });
             chai.expect(errorReport).to.have.property("value").that.equals(value);
         });
 
         it("includes allowed values when switched on in the options", () => {
             const err = verify(Type.literal({ a: 1, b: 1 }), "c").err;
-            const errorReport = err && FormatValidationError.generateReportJson(err, { include: { allowed: true } });
+            const errorReport = err && FormatValidationFailure.generateReportJson(err, { include: { allowed: true } });
             chai.expect(errorReport).to.have.property("allowed").that.eql(["a", "b"]);
         });
 
@@ -173,7 +173,7 @@ describe("validation error", () => {
 			};
 			const result = verify(nestedSpec, data);
             chai.expect(result.err).to.be.an("object")
-            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
+            chai.expect(result.err && FormatValidationFailure.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Data has attribute that is not part of the strict schema: \"b\".",
                     path: ["objArray", 1, "b"]
@@ -199,7 +199,7 @@ describe("validation error", () => {
 
         it("generates an empty path for non-nested specs", () => {
             const result = verify(Type.number, "bla");
-            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
+            chai.expect(result.err && FormatValidationFailure.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Not a number.",
                     path: []
@@ -212,7 +212,7 @@ describe("validation error", () => {
                 a: either(Type.number, Type.string)
             });
             const result = verify(objectEitherSpec, { a: [] });
-            chai.expect(result.err && FormatValidationError.generateErrorPathList(result.err)).to.eql([
+            chai.expect(result.err && FormatValidationFailure.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Not a number.",
                     path: ["a"]
@@ -226,7 +226,7 @@ describe("validation error", () => {
 
         it("includes error code when switched on in the options", () => {
             const err = verify(Type.string, 123).err;
-            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { code: true } }) || [];
+            const errorPathList = err && FormatValidationFailure.generateErrorPathList(err, { include: { code: true } }) || [];
             chai.expect(errorPathList[0]).to.have.property("code").that.equals("type.string.not_a_string");
         });
 
@@ -234,14 +234,14 @@ describe("validation error", () => {
         it("includes erroneous value when switched on in the options", () => {
             const value = 123;
             const err = verify(Type.string, value).err;
-            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { value: true } }) || [];
+            const errorPathList = err && FormatValidationFailure.generateErrorPathList(err, { include: { value: true } }) || [];
             chai.expect(errorPathList[0]).to.have.property("value").that.equals(value);
         });
 
 
         it("includes allowed values code when switched on in the options", () => {
             const err = verify(Type.literal({ a: 1, b: 1 }), "c").err;
-            const errorPathList = err && FormatValidationError.generateErrorPathList(err, { include: { allowed: true } }) || [];
+            const errorPathList = err && FormatValidationFailure.generateErrorPathList(err, { include: { allowed: true } }) || [];
             chai.expect(errorPathList[0]).to.have.property("allowed").that.eql(["a", "b"]);
         });
 

@@ -3,7 +3,7 @@ import {
     either, adjust, alias, definitionOf, extractAliases, verify, VerifiedType,
     ValidationFailure
 } from "./spec";
-import {ValidationError, FormatValidationError} from "./validation_error";
+import {ValidationError, FormatValidationFailure} from "./validation_error";
 import {Type} from "./type";
 import {Constraint} from "./constraint";
 
@@ -23,7 +23,7 @@ export {
     VerifiedType,
     ValidationFailure,
     ValidationError,
-    FormatValidationError,
+    FormatValidationFailure,
     Type,
     Constraint
 };

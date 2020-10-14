@@ -17,7 +17,7 @@ type ValidationErrorPathList = Array<{
     allowed?: unknown;
 }>;
 
-interface ValidationFailure {
+export interface ValidationFailure {
     code: string;
     value: unknown;
     allowed?: unknown;
@@ -55,12 +55,12 @@ export class ValidationError implements ValidationFailure {
 
     // DEPRECATED
     public generateReportJson(): ValidationErrorJsonReport {
-        return FormatValidationError.generateReportJson(this);
+        return FormatValidationFailure.generateReportJson(this);
     }
 
     // DEPRECATED
     public generateErrorPathList() {
-        return FormatValidationError.generateErrorPathList(this);
+        return FormatValidationFailure.generateErrorPathList(this);
     }
 
     public toString() {
@@ -76,7 +76,7 @@ interface ErrorReportOptionsImpl {
     include: { message: boolean; code: boolean; value: boolean; allowed: boolean; };
 }
 
-export const FormatValidationError = (() => {
+export const FormatValidationFailure = (() => {
     const generateReportJsonImpl = (err: ValidationFailure, options: ErrorReportOptionsImpl): ValidationErrorJsonReport => {
         const keyProp = typeof err.key === "undefined" ? {} : { key: err.key };
         const nestedProp = err.nestedErrors ? { nested: err.nestedErrors.map(ve => generateReportJsonImpl(ve, options)) } : {};

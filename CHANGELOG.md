@@ -4,7 +4,7 @@
 * Change interface of types and constraints  functions to return errors instead of throwing them.
 * Replaced ValidationError class with ValidationFailure interface. Exception thrown by `verify(...).value()` is still of class ValidationError.
 * Added stable error codes and original data value to ValidationFailure interface.
-* Moved error report generators to separate `FormatValidationError` space.
+* Moved error report generators to separate `FormatValidationFailure` space.
 * Added custom error class to options of `verify`.
 * Nesting of missing attribute error in `Type.object` and `Type.interface`.
 * Customizable error message and error code for `Constraint.string.regex`.
