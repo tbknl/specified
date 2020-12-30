@@ -3,7 +3,7 @@ import {
     Type, verify, optional, constrain, adjust, either, alias, definitionOf,
     extractAliases, Constraint, FormatValidationFailure
 } from "..";
-import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsPropertyOptional } from "./static-assert";
+import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsPropertyOptional, staticAssertEqualType } from "./static-assert";
 
 
 const specWithUnknownVersion = {
@@ -275,6 +275,7 @@ describe("spec", () => {
             const myModel1 = verify(stringOrBool, "a string").value();
             staticAssertIsNotAny(myModel1);
             staticAssertUndefinedNotAllowed(myModel1);
+            staticAssertEqualType<string | boolean, typeof myModel1>(true);
             chai.expect(typeof myModel1).to.equal("string");
             chai.expect(myModel1).to.equal("a string");
 
@@ -289,6 +290,7 @@ describe("spec", () => {
 
         it("accepts either value of upto 9 specs", () => {
             const myModel1 = verify(eitherOfNine, 101).value();
+            staticAssertEqualType<number | string | { a: number } | { b: string } | number[] | boolean[] | (boolean | { b : boolean })[], typeof myModel1>(true);
             chai.expect(myModel1).to.equal(101);
 
             const myModel2 = verify(eitherOfNine, 9).value();
@@ -315,8 +317,6 @@ describe("spec", () => {
             const myModel9 = verify(eitherOfNine, [true, { b: true}, false, { b: false }]).value();
             chai.expect(myModel9).to.eql([true, { b: true}, false, { b: false }]);
         });
-
-        // TODO: Rejects for eitherOfNine.
 
         describe("definition", () => {
             const option1Spec = Type.null;

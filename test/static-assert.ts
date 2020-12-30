@@ -13,5 +13,12 @@ export function staticAssertIsArray<T>(_x: IsArray<T>) {}
 type OptionalProperties<T> = { [K in keyof T]-?: ({} extends { [P in K]: T[K] } ? K : never) }[keyof T];
 export function staticAssertIsPropertyOptional<V, P extends OptionalProperties<V>>(_p: P, _x: V) { }
 
+// Modified from source: https://stackoverflow.com/a/54160691
+type IsEqualType<A, B> = (<T>() => T extends A ? 1 : 0) extends (<T>() => T extends B ? 1 : 0)
+    ? (A extends B ? (B extends A ? true : false) : false)
+    : false;
+
+export function staticAssertEqualType<A, B>(_x: IsEqualType<A, B>) {}
+
 // TODO: Apply static assertions in all test files.
 
