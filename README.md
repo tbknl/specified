@@ -129,6 +129,35 @@ const positiveIntegerSpec = constrain(Type.number, [
 ```
 
 
+## Spec transformation
+
+The resulting value of a spec verification can be automatically transformed in the process of verification, by using the [transform](#transform) function. This function takes a source spec and a transformation function and returns a new spec that automatically applies the transformation function to the output of source spec's evaluation value. Note that both the source spec verification can fail and the tranformation itself can fail.
+
+There are a few built-in transformation functions in this package, see the reference section [transformation](#transformation). But it is also easy to create a custom transformation spec, like in the following example:
+```typescript
+import { Type, transform } from "specified";
+
+const sourceSpec = Type.tuple(Type.number, Type.number);
+const transformedSpec = transform(
+    sourceSpec,
+    (value: [number, number]) => {
+        if (value[0] < 0 || value[1] < 0) {
+            return { err: {
+                code: "transform.coordinates.negative_value",
+                value,
+                message: "Negative value not allowed."
+            } };
+        }
+        else {
+            return { err: null, value: { x: value[0], y: value[0] } };
+        }
+    }
+);
+```
+
+Note that a spec with a transformation is just a regular spec. Therefore all operations for specs can be applied to it, like for example adding constraints to it.
+
+
 ## Combining specs
 
 A union of two or more specs can be created with the `either(spec1, spec2, ... , specN)` function, resulting in a new spec, which succeeds verification if the data value is accepted by one of the provided specs. The resulting typescript type is the union of verification result types of the provided specs. For example, `either(Type.string, Type.number)` results in the type `string | number`. See the [either](#either) reference section for more information.
@@ -195,6 +224,12 @@ The function `optional(spec)` only applies to a spec which is used as a [schema]
 #### either
 
 The function `either(spec1, spec2, ...)` combines multiple specs to create a new spec. Verification of this new spec will succeed if either one or more of the specs in the combination succeeds. The specs in the combination are evaluated in the order they are passed to the `either` function.
+
+#### transform
+
+The function `transform(sourceSpec, transformFunc)` creates a new spec that applies the supplied transformation function to the output value of the source spec upon evaluation. A failure on the evaluation of the contained source spec will result in a failure on the transormed spec. The transformation function may also fail itself.
+
+The transformation function should have a single parameter that has a type that is compatible with the output value type of the source spec. In case of a failure, the transformation function should produce a result in the form of `{ err: ValidationFailure }` and in case of a successfull transformation `{ err: null, value: transformedValue }`. Note that the type of the transformed value may be different from the output value type of the source spec.
 
 
 ### Type
@@ -467,6 +502,11 @@ The constraint `Constraint.array.unique(equalsFunc)` applies to arrays. It check
 Verification of a spec with this constraint can result in a failure with error code `constraint.array.unique`.
 
 NOTE: In the worst case scenario, this constraint does `1/2 * (N^2 - N)` calls to the `equalsFunc` function, where `N` is the array length.
+
+
+### Transformation
+
+TODO
 
 
 ### Spec definitions

@@ -1,7 +1,7 @@
 import * as chai from "chai";
 import {
     Type, verify, optional, constrain, adjust, either, alias, definitionOf,
-    extractAliases, Constraint, FormatValidationFailure
+    extractAliases, Constraint, FormatValidationFailure, transform
 } from "..";
 import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsPropertyOptional, staticAssertEqualType } from "./static-assert";
 
@@ -503,6 +503,85 @@ describe("spec", () => {
             });
         });
 
+    });
+
+    describe("transform", () => {
+
+        it("transforms the result value", () => {
+            const squaredNumberSpec = transform(Type.number, (value: number) => ({ err: null, value: value * value }));
+            const result = verify(squaredNumberSpec, 5);
+            chai.expect(result.err).to.equal(null);
+            chai.expect(result.value()).to.equal(25);
+        });
+
+        it("passes transformation failures to the evaluation result", () => {
+            const transformErrorCode = "transform.always_fail";
+            const transformErrorMessage = "This transform always fails.";
+            const alwaysFailingTransformSpec = transform(
+                Type.number,
+                (value: number) => ({
+                    err: {
+                        code: transformErrorCode,
+                        value,
+                        message: transformErrorMessage
+                    },
+                    value: "a_string_value"
+                })
+            );
+
+            const result = verify(alwaysFailingTransformSpec, 777);
+            chai.expect(result.err).to.eql({
+                code: transformErrorCode,
+                value: 777,
+                message: transformErrorMessage
+            });
+        });
+
+        it("passes source spec evaluation failures to the result", () => {
+            const squaredNumberSpec = transform(Type.number, (value: number) => ({ err: null, value: value * value }));
+            const result = verify(squaredNumberSpec, "not_a_number");
+            chai.expect(result.err).to.eql({
+                code: "type.number.not_a_number",
+                value: "not_a_number",
+                message: "Not a number."
+            });
+        });
+
+        it("can have a different result type than the source spec", () => {
+            const squaredNumberSpec = transform(Type.number, (value: number) => ({ err: null, value: `${value}` }));
+            const result = verify(squaredNumberSpec, 123);
+            chai.expect(result.err).to.equal(null);
+
+            const resultValue = result.value();
+            staticAssertIsNotAny(resultValue);
+            staticAssertUndefinedNotAllowed(resultValue);
+            staticAssertEqualType<string, typeof resultValue>(true);
+            chai.expect(resultValue).to.equal("123");
+        });
+
+        describe("definition", () => {
+            const sourceSpec = Type.number;
+            const transformedSpec = transform(sourceSpec, (value: number) => ({ err: null, value }));
+
+            it("has the correct definition type", () => {
+                chai.expect(definitionOf(transformedSpec).type).to.equal("transform");
+            });
+
+            it("uses the definition of the source spec for the nested types", () => {
+                chai.expect(definitionOf(transformedSpec).nested).to.eql({
+                    source: sourceSpec.definition
+                });
+            });
+
+        });
+
+        describe("spec version", () => {
+
+            it("throws an error in case of an incorrect spec version", () => {
+                chai.expect(() => transform(specWithUnknownVersion, (value: number) => ({ err: null, value }))).to.throw();
+            });
+
+        });
     });
 
 });

@@ -274,3 +274,28 @@ export const either = <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple
     }
 };
 
+
+export const transform = <S extends Spec<EvalResult<any>, any>, T>(spec: S, transformFunc: (input: VerifiedType<S>) => EvalResult<T>): Spec<EvalResult<T>, LocalOptionsOf<S>> => {
+    if (spec.version === 1) {
+        return {
+            version: 1 as 1,
+            definition: {
+                type: "transform",
+                nested: { source: spec.definition }
+            },
+            eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>): EvalResult<T> => {
+                const sourceResult = spec.eval(value, options);
+                if (sourceResult.err) {
+                    return sourceResult;
+                }
+                else {
+                    return transformFunc(sourceResult.value);
+                }
+            }
+        };
+    }
+    else {
+        throw Error(`Unknown spec version '${spec.version}'`);
+    }
+};
+

@@ -1,7 +1,7 @@
 import {
     Spec, SpecConstraint, SpecOptions, GlobalOptions, constrain, optional,
     either, adjust, alias, definitionOf, extractAliases, verify, VerifiedType,
-    ValidationFailure
+    ValidationFailure, transform
 } from "./spec";
 import {ValidationError, FormatValidationFailure} from "./validation_error";
 import {Type} from "./type";
@@ -25,5 +25,6 @@ export {
     ValidationError,
     FormatValidationFailure,
     Type,
-    Constraint
+    Constraint,
+    transform
 };
