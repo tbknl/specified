@@ -57,7 +57,7 @@ describe("validation error", () => {
                 arrayMap: { x: [1, 2, 3], y: "NotAnArray", z: [7, "eight", 9] }
             };
             const result = verify(nestedSpec, data);
-            chai.expect(result.err).to.be.an("object")
+            chai.expect(result.err).to.be.an("object");
             chai.expect(result.err && FormatValidationFailure.generateReportJson(result.err)).to.eql({
 				msg: "Invalid attribute data.",
 				nested: [
@@ -172,7 +172,7 @@ describe("validation error", () => {
 				arrayMap: { x: [1, 2, 3], y: "NotAnArray", z: [7, "eight", 9] }
 			};
 			const result = verify(nestedSpec, data);
-            chai.expect(result.err).to.be.an("object")
+            chai.expect(result.err).to.be.an("object");
             chai.expect(result.err && FormatValidationFailure.generateErrorPathList(result.err)).to.eql([
                 {
                     msg: "Data has attribute that is not part of the strict schema: \"b\".",

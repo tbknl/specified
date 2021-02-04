@@ -213,7 +213,7 @@ describe("type", () => {
 
         it("handles classes of which the constructor has parameters", () => {
             class MyClass2 {
-                constructor(_x: number) {}
+                public constructor(_x: number) {}
             }
             const myClass2Spec = Type.instance(MyClass2);
             const myClass2Instance = new MyClass2(123);
@@ -473,7 +473,7 @@ describe("type", () => {
                 const schemaWithDescriptions = {
                     attrA: { ...Type.string, description: "This describes attribute A."},
                     attrB: Type.number,
-                    attrC: { ...Type.boolean, description: "This describes attribute C."},
+                    attrC: { ...Type.boolean, description: "This describes attribute C."}
                 };
                 const objSpecWithDescriptions = Type.object(schemaWithDescriptions);
                 chai.expect(definitionOf(objSpecWithDescriptions).descriptions).to.eql({
@@ -553,7 +553,7 @@ describe("type", () => {
                 ]
             };
             const result = verify(testSpec, data);
-            chai.expect(result.err).to.be.null;
+            chai.expect(result.err).to.equal(null);
             const myModel: {
                 name: string,
                 orders: Array<{
@@ -890,8 +890,8 @@ describe("type", () => {
 
         it("accepts valid tuple data", () => {
             const data = ["abc", 123, true];
-            const resultValue: [string, number, boolean] = verify(tupleSpec, data).value();
-            chai.expect(resultValue).to.be.eql(data);
+            const tuple: [string, number, boolean] = verify(tupleSpec, data).value();
+            chai.expect(tuple).to.be.eql(data);
         });
 
         it("rejects non-tuple data", () => {
@@ -954,14 +954,14 @@ describe("type", () => {
         });
 
         describe("definition", () => {
-            const tupleSpec = Type.tuple(Type.string, Type.number, Type.boolean);
+            const snbTupleSpec = Type.tuple(Type.string, Type.number, Type.boolean);
 
             it("has the correct definition type", () => {
-                chai.expect(definitionOf(tupleSpec).type).to.equal("tuple");
+                chai.expect(definitionOf(snbTupleSpec).type).to.equal("tuple");
             });
 
             it("has the correct nested definitions", () => {
-                chai.expect(definitionOf(tupleSpec).nested).to.eql({
+                chai.expect(definitionOf(snbTupleSpec).nested).to.eql({
                     0: definitionOf(Type.string),
                     1: definitionOf(Type.number),
                     2: definitionOf(Type.boolean)

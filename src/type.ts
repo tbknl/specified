@@ -48,7 +48,11 @@ const objectDefinition = <S extends Schema>(schema: S, typeName: "object" | "int
     }, {})
 });
 
-const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeName: "object" | "interface") => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
+const objectEval = <S extends Schema>(
+    schema: S,
+    defaultStrict: boolean,
+    typeName: "object" | "interface"
+) => (data: unknown, options: { local?: { strict?: boolean, failEarly?: boolean }, global: { failEarly?: boolean } }) => {
     const settings = { strict: defaultStrict, failEarly: false, ...options.global, ...options.local };
     if (typeof data !== "object" || data === null || data instanceof Array) {
         return { err: { code: `type.${typeName}.not_a_regular_object`, value: data, message: "Not a regular object." } };
@@ -83,7 +87,7 @@ const objectEval = <S extends Schema>(schema: S, defaultStrict: boolean, typeNam
         }
     }
     if (nestedErrors.length) {
-        return { err: { code: `type.${typeName}.invalid_attribute_data`, value: data, message: "Invalid attribute data.", nestedErrors } }
+        return { err: { code: `type.${typeName}.invalid_attribute_data`, value: data, message: "Invalid attribute data.", nestedErrors } };
     }
     return { err: null, value: model as Model<S> };
 };

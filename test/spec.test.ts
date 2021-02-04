@@ -290,7 +290,7 @@ describe("spec", () => {
 
         it("accepts either value of upto 9 specs", () => {
             const myModel1 = verify(eitherOfNine, 101).value();
-            staticAssertEqualType<number | string | { a: number } | { b: string } | number[] | boolean[] | (boolean | { b : boolean })[], typeof myModel1>(true);
+            staticAssertEqualType<number | string | { a: number } | { b: string } | number[] | boolean[] | (boolean | { b: boolean })[], typeof myModel1>(true);
             chai.expect(myModel1).to.equal(101);
 
             const myModel2 = verify(eitherOfNine, 9).value();

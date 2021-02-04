@@ -33,8 +33,8 @@ export interface SpecDefinition {
     readonly descriptions?: { [attr: string]: string };
 }
 
-type EvalResultFailure = { err: ValidationFailure; };
-type EvalResultSuccess<T> = { err: null; value: T; };
+interface EvalResultFailure { err: ValidationFailure; }
+interface EvalResultSuccess<T> { err: null; value: T; }
 export type EvalResult<T> = EvalResultFailure | EvalResultSuccess<T>;
 
 export interface Spec<R extends EvalResult<any>, LocalOpts extends {} = {}> {
@@ -56,7 +56,12 @@ interface VerifyOptions {
     errorClass: new (msg: string, err: ValidationFailure) => ValidationFailure;
 }
 
-export const verify = <S extends Spec<EvalResult<any>, {}>>(spec: S, value: unknown, globalOptions: GlobalOptions = {}, verifyOptions: VerifyOptions = { errorClass: ValidationError }): VerifyResult<VerifiedType<S>> => {
+export const verify = <S extends Spec<EvalResult<any>, {}>>(
+    spec: S,
+    value: unknown,
+    globalOptions: GlobalOptions = {},
+    verifyOptions: VerifyOptions = { errorClass: ValidationError }
+): VerifyResult<VerifiedType<S>> => {
     if (spec.version === 1) {
         const result = spec.eval(value, { global: globalOptions });
         if (result.err) {
@@ -116,7 +121,7 @@ export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constra
             eval: (value: unknown, options: SpecOptions<LocalOptionsOf<S>>): EvalResultOf<S> => {
                 const candidateResult = spec.eval(value, options);
                 if (!candidateResult.err) {
-                    for (let c of constraints) {
+                    for (const c of constraints) {
                         const { err } = c.eval(candidateResult.value);
                         if (err) {
                             return { err };
@@ -140,7 +145,10 @@ export const constrain = <S extends Spec<EvalResult<any>, any>>(spec: S, constra
 export function optional<S extends Spec<EvalResult<any>, any>>(spec: S): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true };
 export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options: {}): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: true };
 export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options: { defaultValue: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & { optional: false };
-export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options?: { defaultValue?: VerifiedType<S> }): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & ({ optional: true } | { optional: false }) {
+export function optional<S extends Spec<EvalResult<any>, any>>(
+    spec: S,
+    options?: { defaultValue?: VerifiedType<S> }
+): Spec<EvalResultOf<S>, LocalOptionsOf<S>> & ({ optional: true } | { optional: false }) {
     if (spec.version === 1) {
         if (options && typeof options.defaultValue !== "undefined") {
             const defaultValue = options.hasOwnProperty("defaultValue") ? { defaultValue: options.defaultValue } : {};
@@ -161,17 +169,17 @@ export function optional<S extends Spec<EvalResult<any>, any>>(spec: S, options?
                 version: 1 as 1,
                 definition: {
                     ...spec.definition,
-                    flags: [...(spec.definition.flags || []), "optional"],
+                    flags: [...(spec.definition.flags || []), "optional"]
                 },
                 eval: spec.eval,
-                optional: true as true,
+                optional: true as true
             };
         }
     }
     else {
         throw Error(`Unknown spec version '${spec.version}'`);
     }
-};
+}
 
 
 export const adjust = <S extends Spec<EvalResult<any>, any>>(spec: S, adjustedOptions: LocalOptionsOf<S>): Spec<EvalResultOf<S>, LocalOptionsOf<S>> => {

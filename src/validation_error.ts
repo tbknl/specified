@@ -91,7 +91,6 @@ export const FormatValidationFailure = (() => {
     };
 
     const generateErrorPathListImpl = (err: ValidationFailure, options: ErrorReportOptionsImpl): ValidationErrorPathList => {
-        //const errorPathList: { path: ValidationErrorKey[], msg?: string }[] = [];
         const pathKey = typeof err.key !== "undefined" ? [err.key] : [];
         if (err.nestedErrors) {
             return err.nestedErrors.reduce((acc, ne) => acc.concat(generateErrorPathListImpl(ne, options).map(nep => ({
@@ -111,7 +110,6 @@ export const FormatValidationFailure = (() => {
                 ...(options.include.allowed && { allowed: err.allowed })
             }];
         }
-        //return errorPathList;
     };
 
     return {
@@ -121,7 +119,7 @@ export const FormatValidationFailure = (() => {
                     message: !options || !options.include || !options.include.hasOwnProperty("message") || options.include.message || false,
                     code: options && options.include && options.include.code || false,
                     value: options && options.include && options.include.value || false,
-                    allowed: options && options.include && options.include.allowed || false,
+                    allowed: options && options.include && options.include.allowed || false
                 }
             };
             return generateReportJsonImpl(err, optionsImpl);
@@ -132,7 +130,7 @@ export const FormatValidationFailure = (() => {
                     message: !options || !options.include || !options.include.hasOwnProperty("message") || options.include.message || false,
                     code: options && options.include && options.include.code || false,
                     value: options && options.include && options.include.value || false,
-                    allowed: options && options.include && options.include.allowed || false,
+                    allowed: options && options.include && options.include.allowed || false
                 }
             };
             return generateErrorPathListImpl(err, optionsImpl);
