@@ -6,6 +6,7 @@ import {
 import {ValidationError, FormatValidationFailure} from "./validation_error";
 import {Type} from "./type";
 import {Constraint} from "./constraint";
+import {Transformation} from "./transformation";
 
 export {
     Spec,
@@ -26,5 +27,6 @@ export {
     FormatValidationFailure,
     Type,
     Constraint,
-    transform
+    transform,
+    Transformation
 };
