@@ -1,6 +1,6 @@
 {
 	"name": "specified",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Type-safe typescript data specification verification",
 	"author": "Dave van Soest",
 	"license": "MIT",
