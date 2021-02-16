@@ -33,9 +33,7 @@ export interface SpecDefinition {
     readonly descriptions?: { [attr: string]: string };
 }
 
-interface EvalResultFailure { err: ValidationFailure; }
-interface EvalResultSuccess<T> { err: null; value: T; }
-export type EvalResult<T> = EvalResultFailure | EvalResultSuccess<T>;
+export type EvalResult<T> = { err: ValidationFailure; } | { err: null; value: T; };
 
 export interface Spec<R extends EvalResult<any>, LocalOpts extends {} = {}> {
     readonly version: 1;
@@ -44,7 +42,7 @@ export interface Spec<R extends EvalResult<any>, LocalOpts extends {} = {}> {
 }
 
 export type VerifiedType<S extends Spec<any, any>> = Extract<ReturnType<S["eval"]>, { err: null }>["value"];
-export type EvalResultOf<S extends Spec<any, any>> = EvalResultFailure | EvalResultSuccess<VerifiedType<S>>;
+export type EvalResultOf<S extends Spec<any, any>> = { err: ValidationFailure; } | { err: null; value: VerifiedType<S>; };
 export type LocalOptionsOf<S extends Spec<any, any>> = Required<Parameters<S["eval"]>[1]>["local"];
 
 interface VerifyResult<T> {
@@ -260,7 +258,7 @@ export const either = <SpecsTuple extends Spec<any, any>[]>(...specs: SpecsTuple
                 type: "either",
                 nested
             },
-            eval: (value: unknown, options: SpecOptions): TupleTypeUnion<TupleSpecEvalResultTypes<SpecsTuple>> | EvalResultFailure => {
+            eval: (value: unknown, options: SpecOptions): TupleTypeUnion<TupleSpecEvalResultTypes<SpecsTuple>> | { err: ValidationFailure; } => {
                 const validationErrors: ValidationFailure[] = [];
 
                 for (const spec of specs) {
