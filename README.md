@@ -12,7 +12,7 @@ Any data flowing into a program at run-time should be checked for validity, whil
 * Single definition of type and validation.
 * Strictly typed and type-safe.
 * Zero dependencies.
-* Easy extendability: simple to create custom convertions and validations.
+* Easy extendability: simple to create custom conversions and validations.
 
 
 ## Upgrade from v0.x to v1.y
@@ -219,7 +219,7 @@ Verification of a spec with this type will result in a failure with error code `
 
 #### Type.unknown
 
-The spec type `Type.unknown` accepts any data, but returns `unknown` as its data type. This spec type will never cause a validition failure.
+The spec type `Type.unknown` accepts any data, but returns `unknown` as its data type. This spec type will never cause a validation failure.
 
 Use cases for this spec type include:
 * checking that a property on an object exists, but it doesn't matter what its value is.
@@ -659,7 +659,7 @@ By default `globalOptions` is empty. But it may contain the following options, w
 
 The `verifyOptions` contain the following options:
 
-* `errorClass`: The error class to use when throwing an error from the `.value()` function of the verification result. Default value: `ValidationError`. The used class must have a constructor functionwith this signature: `function (msg: string, err: ValidationFailure): ValidationFailure`.
+* `errorClass`: The error class to use when throwing an error from the `.value()` function of the verification result. Default value: `ValidationError`. The used class must have a constructor function with this signature: `function (msg: string, err: ValidationFailure): ValidationFailure`.
 
 #### VerifiedType
 
