@@ -155,7 +155,7 @@ The exported `FormatValidationFailure` contains functions that format an instanc
 A simple but full example of using specified:
 
 ```typescript
-import {Type, constrain, Constraint, verify} from "specified";
+import {Type, constrain, Constraint, verify, FormatValidationFailure} from "specified";
 
 const productSpec = Type.interface({
     description: Type.string,
