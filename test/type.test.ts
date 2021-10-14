@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import { Type, verify, VerifiedType, optional, adjust, definitionOf, constrain, Constraint } from "..";
-import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsArray } from "./static-assert";
+import { staticAssertIsNotAny, staticAssertUndefinedNotAllowed, staticAssertIsArray, staticAssertEqualType } from "./static-assert";
 
 
 describe("type", () => {
@@ -711,6 +711,11 @@ describe("type", () => {
                 def: [3]
             };
             const myModel = verify(testSpec, data).value();
+
+            staticAssertIsNotAny(myModel.abc);
+            staticAssertUndefinedNotAllowed(myModel.abc);
+            staticAssertEqualType<typeof myModel["abc"], number[]>(true);
+
             chai.expect(myModel).to.have.property("abc").to.eql([1, 2]);
         });
 

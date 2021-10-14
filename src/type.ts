@@ -241,7 +241,7 @@ export const Type = {
             eval: objectEval(schema, false, "interface")
         };
     },
-    map: <T>(keySpec: Spec<EvalResult<string>>, valueSpec: Spec<EvalResult<T>>) => {
+    map: <ValueSpec extends Spec<any, any>>(keySpec: Spec<EvalResult<string>>, valueSpec: ValueSpec) => {
         return {
             version: 1 as 1,
             definition: {
@@ -256,7 +256,7 @@ export const Type = {
                 if (typeof data !== "object" || data === null || data instanceof Array) {
                     return { err: { code: "type.map.not_a_regular_object", value: data, message: "Not a regular object." } };
                 }
-                const result: { [key: string]: T } = {};
+                const result: { [key: string]: VerifiedType<ValueSpec> } = {};
                 const nestedErrors: ValidationFailure[] = [];
                 const dataKeys = Object.keys(data);
                 for (let dataKeyIndex = 0; dataKeyIndex < dataKeys.length && (!settings.failEarly || !nestedErrors.length); ++dataKeyIndex) {

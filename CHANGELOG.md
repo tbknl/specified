@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.2
+* Fixed issue with `Type.map` value type always being unioned with type `undefined`.
+
 ## v1.0.1
 * Fixed issues with unexported internal interfaces (typescript error TS4023).
 
