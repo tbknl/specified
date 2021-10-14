@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.1
+* Fixed issues with unexported internal interfaces (typescript error TS4023).
+
 ## v1.0.0
 * Change interface of types and constraints  functions to return errors instead of throwing them.
 * Replaced ValidationError class with ValidationFailure interface. Exception thrown by `verify(...).value()` is still of class ValidationError.
